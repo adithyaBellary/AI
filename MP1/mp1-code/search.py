@@ -20,6 +20,7 @@ files and classes when code is run, so be careful to not modify anything else.
 # searchMethod is the search method specified by --method flag (bfs,dfs,greedy,astar)
 
 import collections
+import heapq
 
 
 def search(maze, searchMethod):
@@ -79,7 +80,8 @@ def bfs(maze):
     
     start = maze.getStart()
     obj = maze.getObjectives()
-    print(obj)
+    # print(obj)
+    path = 0
 
     # (node, path)
 
@@ -95,7 +97,7 @@ def bfs(maze):
         if node in obj:
             obj.remove(node)
             # print(obj,"\n")
-            print(node)
+            # print(node)
             if obj == []:
                 break
         if node not in v:
@@ -106,16 +108,13 @@ def bfs(maze):
                 temp = path + [n]
                 q.append( (n, temp) )
     
-    print(path)
+    # print(path)
     return path, len(v)
 
 
 def dfs(maze):
     # TODO: Write your code here
     # return path, num_states_explored
-
-
-    
     start = maze.getStart()
     obj = maze.getObjectives()
 
@@ -143,7 +142,10 @@ def dfs(maze):
 
     return path, len(v)
 
-def distance(a,b): return abs(a[0] - b[0]) + abs(a[1] - b[1])
+def distance(a,b): 
+    # print("a", a)
+    # print("b", b)
+    return abs(a[0] - b[0][0]) + abs(a[1] - b[0][1])
 
 def greedy(maze):
     # TODO: Write your code here
@@ -151,18 +153,33 @@ def greedy(maze):
 
     start = maze.getStart()
     obj = maze.getObjectives()
+    path = []
 
     # q = collections.deque( [(start, distance(start, obj))] )
     # frontier = set()
 
-    #(distance to goal, node)
-    priorityq = [(distance(start, obj), start)]
-
-    # while q:
-    #     node, dist = q.popleft()
+    #(distance to goal, node, path)
+    priorityq = heapq.heapify( [(distance(start, obj), start, [start])] )
+    v = set()
 
 
-    return [], 0
+    while priorityq:
+        #get the min distance 
+        dist, node, path = heapq.heappop(priorityq)
+        # print(node)
+        
+        if node in obj:
+            #we found the goal state
+            break
+        
+        if node not in v:
+            v.add(node)
+            neighbors = maze.getNeighbors(node[0], node[1])
+            for n in neighbors:
+                temp = path + [n]
+                heapq.heappush( (distance(n, obj), n, temp) )
+
+    return path, len(v)
 
 
 def astar(maze):
