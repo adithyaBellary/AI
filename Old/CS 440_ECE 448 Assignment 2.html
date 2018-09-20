@@ -1,0 +1,688 @@
+
+<!-- saved from url=(0056)https://courses.engr.illinois.edu/ece448/sp2018/mp2.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <title>CS 440/ECE 448 Assignment 2</title>
+</head>
+<body bgcolor="white">
+
+<table width="800">
+  <tbody><tr>
+    <td>
+      <h2>CS 440/ECE 448 Spring 2018</h2>
+      <h2>Assignment 2: Smart Manufacturing, Two-Player Games</h2>
+      <h3>Due at: Monday, March 12, 11:59 PM</h3>
+      <p>
+        In this assignment, you will build search algorithms
+	specialized for two types of special problems: planning a
+	shipping logistics problem, and planning the actions of an
+	agent that plays a game.
+      </p>
+      <p>
+        You are free to use any high-level programming languages you
+        are comfortable with, including but not limited to Java, C++,
+        Python, and MATLAB.  You have the option of working in groups
+        of up to three people, all of whom should take this course for
+        the same number of credit hours.  We focus on the entire
+        problem solving process and you should hand in <b>the code</b>
+        with your implementation (as a ZIP file) and <b>a written
+        report</b> with your analysis (as a PDF, separate from the ZIP
+        file).
+      </p>
+      <p>
+        Point totals are listed next to each section header.
+        Three-credit students can earn a maximum of 24 points plus 6
+        extra credit points, whereas four-credit students can earn a
+        maximum of 32 points plus 8 extra credit points.  Four-credit
+        students are required to finish Part 2, and can try Part 2
+        extra credit section for extra credit.  Three-credit students
+        can try Part 2 for extra credit, but are not supposed to
+        finish Part 2 extra credit section since your extra credit
+        points will be capped for balance.
+      </p>
+      <h2>Contents</h2>
+      <ul>
+	<li>Planning
+	  <ul>
+            <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#part1.1">Part 1.1: Planning using A* Search, for
+		everyone</a></li>
+            <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#part1.2">Part 1.2: Planning using a Planning
+		Graph, for 4-credit students</a></li>
+	    <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#part1.3">Part 1.3: Extra Credit</a></li>
+	  </ul>
+	</li>
+	<li>Go-Moku Two-Player Game Playing Agents
+	  <ul>
+            <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#part2.1">Part 2.1: Reflex Agent, for everyone</a></li>
+            <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#part2.2">Part 2.2: Minimax and Alpha-Beta Agents, for
+		everyone</a></li>
+            <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#part2.3">Part 2.3: Stochastic Search,
+		for 4-credit students</a></li>
+            <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#part2.4">Part 2.4: Extra Credit</a></li>
+	  </ul>
+	</li>
+        <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#checklist">Report checklist</a></li>
+        <li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp2.html#submission">Submission instructions</a></li>
+      </ul>
+
+      <h2>Part 1: Smart Manufacturing</h2>
+      <a name="part1.1">
+        <h3>1.1 Planning Using A* Search (for everyone; 8 points)</h3>
+      </a>
+      <p>
+	You are the owner of a smart manufacturing company, with
+	factories in five different cities: Atlanta, Boston, Chicago,
+	Denver, and Edmonton.  Each factory makes a different type of
+	component: for convenience, let's call the components A, B, C,
+	D, and E.  The locations of your factories are a bit
+	inconvenient to one another; the following table gives the
+	distance (in miles) from one factory to another.
+	<table>
+	  <tbody><tr>
+	    <th>Distance</th>
+	    <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+	  <tr>
+	    <th>A</th><td>0</td><td>1064</td><td>673</td><td>1401</td>
+	    <td>277</td>
+	  </tr>
+	  <tr>
+	    <th>B</th><td>1064</td><td>0</td><td>958</td><td>1934</td>
+	    <td>337</td>
+	  </tr>
+	  <tr>
+	    <th>C</th><td>673</td><td>958</td><td>0</td><td>1001</td>
+	    <td>399</td>
+	  </tr>
+	  <tr>
+	    <th>D</th><td>1401</td><td>1934</td><td>1001</td><td>0</td>
+	    <td>387</td>
+	  </tr>
+	  <tr>
+	    <th>E</th><td>277</td><td>337</td><td>399</td><td>387</td>
+	    <td>0</td>
+	  </tr>
+	</tbody></table>
+      </p>
+      <p>
+	From those components, you manufacture five different types of
+	widgets.  Each widget is composed of five widgets of different
+	types, as follows:
+	</p><ul>
+	  <li>Widget 1 = Components AEDCA</li>
+	  <li>Widget 2 = Components BEACD</li>
+	  <li>Widget 3 = Components BABCE</li>
+	  <li>Widget 4 = Components DADBD</li>
+	  <li>Widget 5 = Components BECBD</li>
+	</ul>
+	Thus, for example, widget 1 is manufactured by building
+	components A, E, D, C, and A, in that order.  Each
+	component can only be added once the previous components
+	are already in place; you can't manufacture it in advance.
+      <p></p>
+      <p>
+	Every day, you put five empty widgets in a truck, and the
+	truck visits factories in sequence as necessary to make all
+	five widgets.  While you're at factory A, you can add
+	component A to any widget that needs it, but you can't work
+	ahead. The truck must visit all of the factories necessary to
+	make all five widgets, in the order specified by the widgets.
+	In other words, you need to come up with a sequence of
+	letters that contains each of the sequences above as
+	a subsequence.  Here are some example solutions:
+	</p><ul>
+	  <li>AEDCABEACDBABCEDADBDBECBD (25 stops)</li>
+	  <li>ABBDBEEAAEDABDCCCCBBADEDD (25 stops)</li>
+	  <li>ABDBEAEDABDCBADED (17 stops)</li>
+	</ul>
+      <p></p>
+      <p>
+	The goal of this assignment is to implement A* search that will
+	find two different factory sequences:
+	</p><ol>
+	  <li>First, find the factory sequence with the smallest number of
+	    stops (the smallest number of factories visited).
+	  </li>
+	  <li>Second, find the factory sequence with the smallest number
+	    of miles traveled.
+	  </li>
+	</ol>
+      <p></p>
+      <p>
+	Solve this problem using A* search.  Your report should specify
+	your state representation, actions, and your heuristic.
+	The heuristic need not be very smart, but it needs to be non-zero,
+	and it needs to be admissible and consistent.
+      </p>
+
+      <a name="part1.2">
+	<h3>1.2: Planning Using a Planning Graph (4 points required
+	  for 4-credit students; 2 extra credit points optional for
+	  3-credit students)</h3>
+      </a>
+      
+      <p>
+	Implement the <code>GRAPHPLAN</code> algorith, as described in
+	section 10.3.2 of the textbook, and in
+	<a href="https://www.sciencedirect.com/science/article/pii/S0004370296000471">this
+	article</a>.  In this algorithm, you will create a graph in
+	which each level of the graph is a list of (variable=value at
+	time t) assignments (called "fluents"), and a list of mutex
+	(mutually exclusive) liks among the fluents.  Levels are
+	linked by actions, such as "travel from city A to city B."
+	When you reach a level at which all of the goal conditions are
+	non-mutex, you attempt a backward search to find a sequence of
+	actions.  If the backward search fails, you add another level
+	to the graph and try again.
+      </p>
+      <p>
+	Use the planning graph to find the minimum-distance sequence
+	of factories.  Hand in a plot of the lowest-distance solution
+	resulting from a graph with N, N+1, ... levels, where N is the
+	first level with any solution.
+      </p>
+
+      <a name="part1.3">
+	<h3>1.3 Extra Credit (2 points each)</h3>
+      </a>
+      <p>
+	Extra credit tasks are worth up to two points each, up to a
+	maximum of 25 percent (maximum extra credit = 6 points for
+	3-credit students, 8 points for 4-credit students).
+      </p>
+      <ol>
+	<li>
+	  Implement a random problem generator, that randomly
+	  generates five widget definitions of length N, where N is a
+	  parameter that you can specify (in the required problem,
+	  N=5).  Hand in a plot of the number of nodes expanded by
+	  each of your two A* search algorithms, as a function of N,
+	  for 3&lt;=N&lt;=8.
+	</li>
+	<li>
+	  Implement uniform cost search (Dijkstra's algorithm) for
+	  each of the two problems specified in part 1.1 (minimum
+	  number of stops, minimum distance traveled).  Compare the
+	  number of nodes expanded using uniform cost search versus A*.
+	</li>
+      </ol>
+      
+      <h2>Part 2: Game of Gomoku (Five-in-a-Row)</h2>
+      <p>Created by Zhonghao Wang</p>
+
+      <p>
+	The goal of this part of the assignment is to implement an
+	agent to play a simple 2-player zero-sum game called Gomoku.
+      </p>
+
+      <p>
+      <b>Rules of the Game:</b> This game plays with stones of two
+      colors (red and blue in these figures), on a board with 49 empty
+      spaces arranged in a 7x7 grid.  Players alternate turns placing
+      a stone of their color on an empty intersection (in these
+      instructions, the player who goes first uses the red stones, and
+      the player who goes second uses the blue stones). The winner is
+      the player who first forms an unbroken chain of five stones
+      horizontally, vertically, or diagonally. The game is a tie if
+      all intersections are filled up with stones but neither side
+      wins the game.
+      </p>
+
+      <a name="part2.1">
+	<h3>Part 2.1 (4 points for all): Reflex Agent</h3>
+      </a>
+      <p>
+	The goal of this section is to create a reflex agent
+	following a set of pre-specified rules, so that, given the
+	same initial board position, the reflex agent will always
+	react in exactly the same way. It uses the following strategies:
+	</p><ol>
+	  <li>
+	    <p>
+	      Check whether the agent side is going to win by placing
+	      just one more stone. If so, place the stone which wins
+	      the game. For example, 4 blue stones form an unbroken
+	      chain shown in figure 1. The agent at the blue side
+	      would place a stone on either head of the chain, (0, 4)
+	      or (5, 4), to win the game. To break a tie, choose a
+	      move in the following order: left &gt; down &gt; right &gt;
+	      up. Therefore, (0, 4) would be the move to make.
+            </p>
+            <p align="center">
+	      <img src="./CS 440_ECE 448 Assignment 2_files/mp2figure1.png"><br>
+	      Figure 1: Illustration of reflex agent rule #1
+	    </p>
+	  </li>
+	  <li>
+	    <p>
+	      Then check whether the opponent has an unbroken chain
+	      formed by 4 stones and has an empty intersection on either
+	      head of the chain. If so, place a stone on the empty
+	      intersection. In the case shown in figure 2, the agent at
+	      the blue side would put a stone on (5, 3) to prevent the
+	      red side winning the game.
+	    </p>
+	    <p align="center">
+	      <img src="./CS 440_ECE 448 Assignment 2_files/mp2figure2.png"><br>
+	      Figure 2: Illustration of reflex agent rule #2
+	    </p>
+	  </li>
+	  <li>
+	    <p>
+	      Check whether the opponent has an unbroken chain formed by
+	      3 stones and has empty spaces on both ends of the
+	      chain. If so, place a stone on an empty space at one end
+	      of the chain.  Choose which end of the chain to fill
+	      following the order: left &gt; down &gt; right &gt; up. In figure
+	      3, the agent at the blue side would place a stone on
+	      either (1, 4) or (5, 4). To break a tie, (1, 4) would be
+	      chosen.
+	    </p>
+	    <p align="center">
+	      <img src="./CS 440_ECE 448 Assignment 2_files/mp2figure3.png"><br>
+	      Figure 3: Illustration of reflex agent rule #3
+	    </p>
+	  </li>
+	  <li>
+	    <p>
+	      If none of the previous conditions hold, then find all
+	      possible sequences of 5 consecutive spaces that contain
+	      none of the opponent's stones.  Call each such block a
+	      "winning block," because it's a block in which victory
+	      is still possible. Then, find the winning block which
+	      has the largest number of the agent's stones. Last, in
+	      the winning block, place a stone next to a stone already
+	      in the winning block on board. You may find multiple
+	      winning blocks or multiple positions within a winning
+	      block to place a stone. To break a tie, find the
+	      position which is farthest to the left; among those
+	      which are farthest to the left, find the position which
+	      is closest to the bottom.  For example, in figure 4, the
+	      agent at the red side would place a stone on (0, 1).
+	    </p>
+	    <p align="center">
+	      <img src="./CS 440_ECE 448 Assignment 2_files/mp2figure4.png"><br>
+	      Figure 4: Illustration of reflex agent rule #4
+	    </p>
+	  </li>
+	  <li>
+	    <p><b>Special rule for the agent's first move:</b> For the
+	      very first move, you can implement any strategy you
+	      like.  You can follow rule #4 above (by playing in the
+	      bottom left corner), or you can play at random, or you
+	      can make an optimal move (in the middle), whatever you
+	      like.  This applies only to each player's first move;
+	      each player's second move must follow rules #1-#4.
+	    </p>
+	  </li>
+	</ol>
+      <p></p>
+      <p>
+	Test your reflex agent to make sure it responds, as indicated,
+	to the four examples shown above.
+      </p>
+      <a name="part2.2">
+	<h3>2.2 Minimax and Alpha-beta Agents (12 points for all)</h3>
+      </a>
+      <p>
+	Implement both minimax search and alpha-beta search agents.
+	Implement your minimax and alpha-beta agents so that each of
+	them searches to a depth of three (agent moves, opponent
+	moves, agent moves, and then evaluation function is applied to
+	evaluate the board position).  Test your minimax and
+	alpha-beta agents to make sure that, when given the same board
+	position, they both produce exactly the same move, but the
+	alpha-beta agent comes up with that move after expanding fewer
+	nodes in the search tree.
+      </p>
+      <p>
+	Design an evaluation function that is accurate enough to permit
+	your minimax and alpha-beta agents to beat the reflex agent.
+	Give the same evaluation function to both the minimax and
+	alpha-beta agents.  Describe your evaluation function in your
+	report.
+      </p>
+
+      <a name="part2.3">
+	<h3>Part 2.3 Stochastic search (4 points required for 4-credit
+	  students; 2 points extra credit for 3-credit students)</h3>
+      </a>
+      <p>
+	Implement a Stochastic-search agent for the 7x7 Gomoku game.
+	Your Stochastic-search agent should be an alpha-beta agent
+	with a depth of 2, but the value of each leaf node in the
+	search tree should be estimated by generating N random games
+	from that leaf position.  Experiment a little with the
+	following parameters, and be ready to defend your choices
+	based on either experimental or theoretical arguments, e.g.,
+	by considering the quality of your result versus computational
+	complexity.
+	</p><ul>
+	  <li><b>Policy&gt;</b> At each step of the simulation, how do
+	    you decide where to play?</li>
+	  <li><b>Breadth:</b> How many simulations do you use, from
+	    each board position, to determine its value?
+	  </li>
+	  <li><b>Depth:</b> If you wish, you can abandon a simulation
+	    whenever it exceeds some maximum simulation depth.  If so,
+	    what depth makes sense?  Why?</li>
+	  <li><b>Value:</b> How do you estimate the value of a board
+	    position based on the simulations? For example, how much
+	    is a tie worth?  How much is it worth if a game has to be
+	    abandoned because it exceeds the maximum simulation
+	    depth?</li>
+	</ul>
+      <p></p>
+
+      <a name="part2.4">
+	<h3>2.4 Extra Credit (2 points each)</h3>
+      </a>
+      <p>
+	Extra credit tasks are worth up to two points each, up to a
+	maximum of 25 percent (maximum extra credit = 6 points for
+	3-credit students, 8 points for 4-credit students).
+      </p>
+      <ol>
+	<li>
+	  Implement a user interface that allows a human being to play
+	  against the board, using a graphical user interface that
+	  paints a picture of the board on the screen.  Show
+	  screenshots of a user playing against the agent as figures
+	  in your report, and submit your code.
+	</li>
+	<li>
+	  Use supervised learning to estimate an evaluation function:
+	  (1) randomly generate a large number of sample games, (2)
+	  implement a function that featurizes each board position,
+	  and estimates the value based on those features, e.g., using
+	  linear regression as described in lecture.  Turn in both
+	  your training and test code.  Note: you can use numpy and
+	  scipy for this, but not TensorFlow, Theano, or any other
+	  toolkit specialized for machine learning.
+	</li>
+      </ol>
+
+      <a name="checklist">
+        <h2>Report Checklist</h2>
+      </a>
+      Your report should briefly describe your implementation and
+      fully answer the questions for every part of the assignment.
+      Your description should focus on the most "interesting" aspects
+      of your solution, i.e., any non-obvious implementation choices
+      and parameter settings, and what you have found to be especially
+      important for getting good performance. Feel free to include
+      pseudocode or figures if they are needed to clarify your
+      approach. Your report should be self-contained and it should
+      (ideally) make it possible for us to understand your solution
+      without having to run your source code.  For full credit, in
+      addition to the algorithm descriptions, your report should
+      include the following.
+
+      <ul>
+        <li>
+	  Part 1.1 (Required for all)
+          <ul>
+	    <li>
+	      Give a path with the smallest possible number of stops.
+	      Describe your heuristic, and give the number of nodes
+	      expanded.
+	    </li>
+	    <li>
+	      Give a path with the smallest possible distance.
+	      Describe your heuristic, and give the number of nodes
+	      expanded.
+	    </li>
+	  </ul>
+	</li>
+        <li>
+	  Part 1.2 (Required for 4-credit; Extra-credit for 3-credit).
+	      Provide a figure or table showing, as a function of the
+	      graph level, each of the following facts about your
+	      planning graph.  The number of levels in the graph
+	      should be large enough that (1) there is at least one
+	      solution from the last level, and (2) the number of
+	      mutex links, and the number of miles traveled by the
+	      shortest path from that level, are unchanged between the
+	      second-to-last and last level of the graph.
+	      <ul>
+		<li>The number of fluents at that level of the graph
+		(integer)</li>
+		<li>The number of mutex links (integer)</li>
+		<li>Whether or not all of the goal fluents are
+		non-mutex at that level (binary)</li>
+		<li>Whether or not there is any solution from that level
+		  (binary)</li>
+		<li>The minimum number of miles traveled by any solution
+		  that can be achieved at that level</li>
+	      </ul>
+	      Give the minimum-distance solution achieved in this way
+	      (the sequence of cities, and the distance traveled).
+	</li>
+        <li>
+	  <p>
+	  Part 2.1 Reflex Agent (Required for all).  Play the reflex
+	      agent against itself, starting from the board position
+	      shown in figure 5.  Show us the ending game board.  Use
+	      '.' to denote empty intersections, use small letters to
+	      denote each of the red stones (the first player to play)
+	      in the order in which they were played ('a', 'b', 'c',
+	      etc.), and use capital letters to denote each of the
+	      blue stones (second player) in the order in which they
+	      were played ('A', 'B', 'C', etc.).  You may submit your
+	      final board position as a plaintext matrix, or as a
+	      graphic, but you MUST show us the order of play using
+	      consecutive letters.  Note: since the first two moves
+	      are given to you, the special first-move rule (rule #5)
+	      doesn't apply; all remaining moves must follow rules
+	  #1-#4.
+	  </p>
+	  <p align="center">
+	  <img src="./CS 440_ECE 448 Assignment 2_files/mp2figure5.png"><br>
+	  Figure 5: Starting board position for the required
+	  reflex agent vs. reflex agent game.
+	  </p>
+	</li>
+	<li>
+	  Part 2.2 Minimax and Alpha-Beta Agents (Required for all)
+	  <ul>
+	    <li>
+	      Explain how you implement minimax search and alpha-beta
+	      search. Specifically, explain your evaluation function
+	      and how you do the alpha-beta pruning.
+	    </li>
+	    <li>
+	      Implement the following match-ups starting from an empty
+	      board, and return the final board positions.
+	      Use '.' to denote empty intersections, use
+	      small letters to denote each of the red stones (the
+	      first player to play) in the order in which they were
+	      played ('a', 'b', 'c', etc.), and use capital letters to
+	      denote each of the blue stones (second player) in the
+	      order in which they were played ('A', 'B', 'C', etc.).	      
+	      You may submit your final board position as a plaintext
+	      matrix, or as a graphic, but you MUST show us the order
+	      of play using consecutive letters.
+	      <ol>
+		<li>alpha-beta vs. minimax </li>
+		<li>minimax vs. alpha-beta </li>
+		<li>alpha-beta vs. reflex </li>
+		<li>reflex vs. alpha-beta </li>
+		<li>reflex vs. minimax </li>
+		<li>minimax vs. reflex </li>
+	      </ol>
+	    </li>
+	    <li>
+	      For the alpha-beta vs. minimax and minimax
+	      vs. alpha-beta match-ups, provide a table showing, as a
+	      function of the move number, how many nodes in the
+	      search tree were expanded by each agent in order to find
+	      its move. The table should look something like this, but
+	      with different numbers:
+	      <table>
+		<tbody><tr><th>move</th><th>Nodes expanded, red</th>
+		  <th>Nodes expanded, blue</th></tr>
+		<tr><td>1</td><td>156748</td><td>96400</td></tr>
+		<tr><td>2</td><td>102354</td><td>74300</td></tr>
+		<tr><td>...</td><td>...</td><td>...</td></tr>
+	      </tbody></table>
+	    </li><li>
+	      Briefly analyze the relationship of the number of nodes
+	      expanded per move between minimax agent and alpha-beta
+	      agent.
+	    </li>
+	  </ul>
+	</li>
+	<li>Part 2.3 (required of 4-credit students)
+	  <ul>
+	    <li>
+	      Implement the following two matchups, starting from an
+	      empty board.  Here "alpha-beta" uses the evaluation
+	      function you implemented in part 2.2:
+	      <ol>
+		<li>Stochastic-search vs. Alpha-beta with depth of 2</li>
+		<li>Alpha-beta with depth of 2 vs. Stochastic-search</li>
+	      </ol>
+	      Print out the final state of each of these two boards.
+	      Use '.' to denote empty intersections, use small letters
+	      to denote each of the red stones (the first player to
+	      play) in the order in which they were played ('a', 'b',
+	      'c', etc.), and use capital letters to denote each of
+	      the blue stones (second player) in the order in which
+	      they were played ('A', 'B', 'C', etc.).  You may submit
+	      your final board position as a plaintext matrix, or as a
+	      graphic, but you MUST show us the order of play using
+	      consecutive letters.
+	    </li>
+	    <li>
+	      Answer the four questions listed in the assignment
+	      description, about the policy, breadth, depth, and value
+	      of your stochastic search algorithm.
+	    </li>
+	    <li>
+	      Report the total number of simulated moves necessary for
+	      the Stochastic-search agent to make each move in the
+	      actual game, for each of the two match-ups.  Your table
+	      should look something like the following, but with
+	      different numbers:
+	      <table>
+		<tbody><tr><th>move</th><th>Game A</th><th>Game B</th></tr>
+		<tr><td>1</td><td>45637</td><td>139873</td></tr>
+		<tr><td>2</td><td>129864</td><td>34563</td></tr>
+		<tr><td>...</td><td>...</td><td>...</td></tr>
+	      </tbody></table>
+	    </li>
+	    <li>
+	      Report the value of the move chosen by the
+	      Stochastic-search agent at each move, in each of the two
+	      games.  This value should be a number between 0 and 1,
+	      specifying what the Stochastic-search agent believes to
+	      be the probability that it will win the game if it makes
+	      its best possible move.  Your table should look
+	      something like the following, but with different
+	      numbers:
+	      <table>
+		<tbody><tr><th>move</th><th>Game A</th><th>Game B</th></tr>
+		<tr><td>1</td><td>0.536</td><td>0.598</td></tr>
+		<tr><td>2</td><td>0.574</td><td>0.629</td></tr>
+		<tr><td>...</td><td>...</td><td>...</td></tr>
+	      </tbody></table>
+	    </li>
+	  </ul>
+	</li>
+      </ul>
+
+      <a name="submission">
+        <h2>Submission Instructions</h2>
+      </a>
+      <p>
+	By the submission deadline, <b>one designated person from the
+          group</b> will need to upload the
+        following to
+        <b><a href="https://compass2g.illinois.edu/">Compass2g</a></b>:
+	
+        </p><ol>
+          <li>
+	    A <b><font color="red">report</font></b> in <b>PDF
+            format</b>.  Be sure to put
+            the <b><font color="red">names</font></b> of all the group
+            members at the top of the report, as well as the number of
+            credits (3 or 4).  The name of the report file should
+            be <b>lastname_firstname_a1.pdf</b> (based on the name of
+            the designated person).<br><br>
+	  </li>
+          <li>
+	    Your <b><font color="red">source code</font></b> compressed
+            to a <b>single ZIP file</b>.  The code should be well
+            commented, and it should be easy to see the correspondence
+            between what's in the code and what's in the report. You
+            don't need to include executables or various supporting
+            files (e.g., utility libraries) whose content is
+            irrelevant to the assignment. If we find it necessary to
+            run your code in order to evaluate your solution, we will
+            get in touch with you.  The name of the code archive
+            should be <b>lastname_firstname_a1.zip</b>.
+	  </li>
+        </ol>
+      <p></p>
+      
+      <p>
+	<b><a href="https://compass2g.illinois.edu/">Compass2g</a></b>
+      upload instructions:
+
+        </p><ol>
+          <li>
+	    Log in to <b><a href="https://compass2g.illinois.edu/">https://compass2g.illinois.edu</a></b>
+            and find your section.
+	  </li>
+          <li>
+	    Select <b>Assignment 2 (three credits)</b>
+            or <b>Assignment 2 (four credits)</b> from the list, as
+            appropriate.
+	  </li>
+          <li>
+	    Upload <b> your PDF report</b> and <b> the ZIP file containing your
+	      code</b> as two attachments.
+	  </li>
+          <li>
+	    Hit <b>Submit</b>. <b><font color="red"><em>-- If you don't
+                  hit Submit, we will not receive your submission and
+                  it will not count!</em></font></b>
+	  </li>
+        </ol>
+      <p></p>
+
+      <p>
+	Multiple attempts will be allowed but only your last
+        submission before the deadline will be graded. We have
+        variable grace periods, so if you submit your files on 12:00
+        am the next day due to network latency, do not panic.
+        However, please never rely on the grace period and go any
+        further.
+	<b>We reserve the right to take off points for not following
+	instructions.</b>
+      </p>
+
+      <p>
+	<b>Late policy:</b> For every day that your assignment is
+        late, your score gets multiplied by 0.75.  The penalty gets
+        saturated after four days, that is, you can still get up to
+        about 32% of the original points by turning in the assignment
+        at all.  Extensions without penalty of up to 72 hours will be
+        granted for any assignment if you are ill (documented by a
+        note from your doctor) or have a life-threatening emergency
+        (documented by a note from the emergency dean, a court
+        document, or some comparable documentation).  If you are part
+        of a group, extension is granted only for the part of the
+        project that is affected by the illness or emergency; this is
+        the only reason for which separate submission of sub-projects
+        is ever accepted.
+      </p>
+      
+      <p>
+	<b>Be sure to also refer to course policies on academic
+          integrity, etc.</b>
+      </p>
+
+</td></tr></tbody></table>
+
+
+
+</body></html>

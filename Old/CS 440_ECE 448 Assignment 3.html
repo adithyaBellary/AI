@@ -1,0 +1,261 @@
+
+<!-- saved from url=(0060)https://courses.engr.illinois.edu/ece448/sp2018/mp3/mp3.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+</head>
+<body bgcolor="white">&nbsp;
+
+<title>CS 440/ECE 448 Assignment 3</title>
+<p>&nbsp;
+<table style="width:800px">
+	<tbody>
+		<tr>
+			<td>
+			<h2>CS440/ECE448 Spring 2018</h2>
+
+			<h2>Assignment 3: Pattern Recognition</h2>
+
+			<h3><font color="red">Due: Monday, April 9, 11:59:59PM</font></h3>
+
+			<p>The goal of this assignment is to implement two different classifiers (Naive Bayes and Perceptrons), and apply both of the classifiers to the task of classifying visual patterns. As before, you can work in teams of up to three people (three-credit students with three-credit students, four-credit students with four-credit students).</p>
+
+			<h3>Contents</h3>
+
+			<ul>
+				<li>Part 1: <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part1">Naive Bayes Classifiers for Digit classification</a>
+
+				<ul style="list-style-type:disc">
+					<li>Part 1.1 (for everybody): <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part1.1">Single pixels as features</a></li>
+					<li>Part 1.2 (for four-credit students): <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part1.2">Pixel groups as features</a></li>
+					<li>Part 1 Extra Credit Options: <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part1.extra">Face classification</a></li>
+				</ul>
+				</li>
+				<li>Part 2: <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part2">Alternative models for Digit classification</a>
+				<ul style="list-style-type:disc">
+					<li>Part 2.1 (for everybody): <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part2.1"> Digit classification with perceptrons </a></li>
+					<li>Part 2.2 (for four-credit students): <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part2.2">Digit classification with nearest neighbor</a></li>
+					<li>Part 2 Extra Credit Options: <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#part2.extra">Visualization, Differentiable perceptron, and Other learning algorithms</a></li>
+				</ul>
+				</li>
+				<li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#report">Report checklist</a></li>
+				<li><a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/MP3.html#submission">Submission instructions</a></li>
+			</ul>
+			<!-- <p> </p> -->
+
+			<h2><a id="part1" name="part1">Part 1: Naive Bayes Classifiers on Digit classification</a></h2>
+
+			<h3><img src="./CS 440_ECE 448 Assignment 3_files/digits.gif"></h3>
+			<small>(Adapted from </small><small><a href="http://inst.eecs.berkeley.edu/~cs188/sp11/projects/classification/classification.html">Berkeley CS 188 project 5</a>)</small><br>
+			<br>
+			<strong>Data:</strong> <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/digitdata.zip">This file</a> is a zip archive containing training and test digits, together with their ground truth labels (see <tt>readme.txt</tt> in the zip archive for an explanation of the data format). There are roughly <tt>2400</tt> training exemplars (roughly <tt>240</tt> per class) and <tt>400</tt> test exemplars (roughly <tt>40</tt> per class).
+
+			<p>&nbsp;</p>
+
+			<h3><a id="part1.1" name="part1.1">Part 1.1 Single pixels as features (for everyone; 14 points)</a></h3>
+
+			<ul>
+				<li>
+				<p><strong>Features:</strong> The basic feature set consists of a single binary indicator feature for each pixel. Specifically, the feature <tt>F<sub>ij</sub></tt> indicates the status of the <tt>(i,j)-th</tt> pixel. Its value is <tt>1</tt> if the pixel is foreground, and <tt>0</tt> if it is background. The images are of size <tt>32*32</tt>, so there are <tt>1024</tt> features in total.</p>
+				</li>
+				<li><strong>Training:</strong> The goal of the training stage is to estimate the <strong>likelihoods <font color="blue"><tt>P(F<sub>ij</sub> | class)</tt></font></strong> for every pixel location <tt>(i,j)</tt> and for every digit class from <tt>0</tt> to <tt>9</tt>. The likelihood estimate is defined as<br>
+				<br>
+				<font color="blue"><strong><tt>P(F<sub>ij</sub> = f | class) = (# of times pixel (i,j) has value f in training tokens from this class) / (Total # of training tokens from this class)</tt></strong></font><br>
+				<br>
+				In addition, as discussed in the lecture, you have to <strong>smooth</strong> the likelihoods to ensure that there are no zero counts. <em>Laplace smoothing</em> is a very simple method that increases the observation count of every value <tt>f</tt> by some constant <tt>k</tt>. This corresponds to adding <tt>k</tt> to the numerator above, and <tt>k*V</tt> to the denominator (where V is the number of possible values the feature can take on). The higher the value of k, the stronger the smoothing. Experiment with different values of k (say, from 0.1 to 10) and find the one that gives the highest classification accuracy.<br>
+				<br>
+				You should also estimate the <strong>priors <font color="blue"><tt>P(class)</tt></font></strong> by the empirical frequencies of different classes in the training set.<br>
+				&nbsp;</li>
+				<li><strong>Testing:</strong> You will perform <strong>maximum a posteriori (MAP)</strong> classification of test digits according to the learned Naive Bayes model. Suppose a test image has feature values <tt>f<sub>1,1</sub>, f<sub>1,2</sub>, ... , f<sub>32,32</sub></tt>. According to this model, the posterior probability (up to scale) of each class given the digit is given by<br>
+				<br>
+				<strong><font color="blue"><tt>P(class) &#8901; P(f<sub>1,1</sub> | class) &#8901; P(f<sub>1,2</sub> | class) &#8901; ... &#8901; P(f<sub>32,32</sub> | class)</tt></font></strong><br>
+				<br>
+				Note that in order to avoid underflow, it is standard to work with the log of the above quantity:<br>
+				<br>
+				<strong><font color="blue"><tt>log P(class) + log P(f<sub>1,1</sub> | class) + log P(f<sub>1,2</sub> | class) + ... + log P(f<sub>32,32</sub> | class)</tt></font></strong><br>
+				<br>
+				After you compute the above decision function values for all ten classes for every test image, you will use them for MAP classification.<br>
+				&nbsp;</li>
+				<li><strong>Evaluation:</strong> Use the true class labels of the test images from the <tt>testlabels</tt> file to check the correctness of the estimated label for each test digit. Report your performance in terms of the <strong>classification accuracy for each digit</strong> (percentage of all test images of a given digit correctly classified). Also report your <strong>confusion matrix</strong>. This is a 10x10 matrix whose entry in row r and column c is the <strong>percentage</strong> of test images from class r that are classified as class c. In addition, for each digit class, show the test tokens from that class that have the highest and the lowest posterior probabilities according to your classifier. You can think of these as the most and least "prototypical" instances of each digit class (and the least "prototypical" one is probably misclassified).<br>
+				<br>
+				<strong><font color="red">Important:</font></strong> The ground truth labels of test images should be used <em>only</em> to evaluate classification accuracy. They should not be used in any way during the decision process.<br>
+				<br>
+				<strong><font color="red">Tip:</font></strong> You should be able to achieve at least 85% accuracy on the test set. One "warning sign" that you have a bug in your implementation is if some digit gets 100% or 0% classification accuracy (that is, your system either labels all the test images as the same class, or never wants to label any test images as some particular class).<br>
+				&nbsp;</li>
+				<li><strong>Odds ratios:</strong> When using classifiers in real domains, it is important to be able to inspect what they have learned. One way to inspect a naive Bayes model is to look at the most likely features for a given label. Another tool for understanding the parameters is to look at odds ratios. For each pixel feature <tt>F<sub>ij</sub></tt> and pair of classes <tt>c<sub>1</sub>, c<sub>2</sub></tt>, the odds ratio is defined as<br>
+				<br>
+				<tt><strong><font color="blue">odds(F<sub>ij</sub>=1, c<sub>1</sub>, c<sub>2</sub>) = P(F<sub>ij</sub>=1 | c<sub>1</sub>) / P(F<sub>ij</sub>=1 | c<sub>2</sub>).</font></strong></tt><br>
+				<br>
+				This ratio will be greater than one for features which cause belief in c<sub>1</sub> to increase over the belief in c<sub>2</sub>. The features that have the greatest impact on classification are those with both a high probability (because they appear often in the data) and a high odds ratio (because they strongly bias one label versus another).<br>
+				<br>
+				Take four pairs of digit types that have the highest confusion rates according to your confusion matrix, and for each pair, display the maps of feature likelihoods for both classes as well as the odds ratio for the two classes. For example, the figure below shows the log likelihood maps for 1 (left), 8 (center), and the log odds ratio for 1 over 8 (right):<br>
+				<br>
+				<img src="./CS 440_ECE 448 Assignment 3_files/odds_1_8.gif"><br>
+				<br>
+				If you cannot do a graphical display like the one above, you can display the maps in ASCII format using some coding scheme of your choice. For example, for the odds ratio map, you can use '+' to denote features with positive log odds, ' ' for features with log odds close to 1, and '-' for features with negative log odds.</li>
+			</ul>
+
+			<h3><a id="part1.2" name="part1.2">Part 1.2 Pixel groups as features (4 points required for 4-credit students; 2 extra credit points optional for 3-credit students)</a></h3>
+
+			<p><small>Credit: Yanglei Song</small></p>
+
+			<p>Instead of each feature corresponding to a single pixel, we can form features from groups of adjacent pixels. We can view this as a relaxation of the Naive Bayes assumption that allows us to have a more accurate model of the dependencies between the individual random variables. Specifically, consider a 2*2 square of pixels with top left coordinate i,j and define a feature G<sub>i,j</sub> that corresponds to the ordered tuple of the four pixel values. For example, in the figure below, we have<br>
+			<br>
+			<tt><strong><font color="blue">G<sub>1,1</sub> = (F<sub>1,1</sub>, F<sub>1,2</sub>, F<sub>2,1</sub>, F<sub>2,2</sub>).</font></strong></tt><br>
+			<br>
+			<img src="./CS 440_ECE 448 Assignment 3_files/groupPixels.png" style="height:200px; width:450px"><br>
+			<br>
+			(The exact ordering of the four pixel values is not important as long as it's consistent throughout your implementation.) Clearly, this feature can have 16 discrete values. The 2*2 squares can be disjoint (left side of figure) or overlapping (right side of figure). In the case of disjoint squares, there are 16 * 16 = 256 features; in the case of overlapping squares, there are 31 * 31 = 961 features.<br>
+			<br>
+			We can generalize the above examples of 2*2 features to define features corresponding to n*m disjoint or overlapping pixel patches. An n*m feature will have 2<sup>n*m</sup> distinct values, and as many entries in the conditional probability table for each class. Laplace smoothing applies to these features analogously as to the single pixel features.</p>
+
+			<p>In this part, you should build Naive Bayes classifiers for feature sets of n*m disjoint/overlapping pixel patches and report the following:</p>
+
+			<ul>
+				<li>Test set accuracies for disjoint patches of size 2*2, 2*4, 4*2, 4*4.</li>
+				<li>Test set accuracies for overlapping patches of size 2*2, 2*4, 4*2, 4*4, 2*3, 3*2, 3*3.</li>
+				<li>Discussion of the trends you have observed for the different feature sets (including single pixels), in particular, why certain features work better than others for this task.</li>
+				<li>Brief discussion of running time for training and testing for the different feature sets (which ones are faster and why, and how does the running time scale with feature set size).</li>
+			</ul>
+			<strong><font color="red">Tip:</font></strong> You should be able to achieve over 80% accuracy with your best feature set.<br>
+			&nbsp; <a name="part1.extra"></a>
+
+			<h3><a name="part1.extra">Part 1 Extra Credit (2 points each)</a></h3>
+			Extra credit tasks are worth up to two points each, up to a maximum of 25 percent (maximum extra credit = 6 points for 3-credit students, 8 points for 4-credit students).
+
+			<ul>
+				<li>Apply your Naive Bayes classifier with various features to this <a href="https://courses.engr.illinois.edu/ece448/sp2018/mp3/facedata.zip">face data</a>. It is in a similar format to that of the digit data, and contains training and test images and binary labels, where 0 corresponds to 'non-face' and 1 corresponds to 'face'. The images themselves are higher-resolution than the digit images, and each pixel value is either '#', corresponding to an edge being found at that location, or ' ', corresponding to a non-edge pixel.</li>
+			</ul>
+
+			<p>&nbsp;</p>
+			<a name="classification"></a>
+
+			<h2 id="part2">Part 2: Digit Classification using Discriminative Machine Learning Methods</h2>
+			<a name="perceptron"></a>
+
+			<h3 id="part2.1">Part 2.1 Digit Classification with Perceptrons (for everyone; 10 points)</h3>
+
+			<p>Apply the multi-class (non-differentiable) perceptron learning rule from lecture to the digit classification problem from Part 1.1. As before, the basic feature set consists of a single binary indicator feature for each pixel. Specifically, the feature F<sub>i,j</sub> indicates the status of the (i,j)-th pixel. Its value is 1 if the pixel contains value 1, and 0 if it is 0. The images are of size 32*32, so there are 1024 features in total. For a multi-class perceptron, you need to learn a weight vector for each digit class. Each component of a weight vector corresponds to the weight of a pixel, which makes it of length either 1024 (without bias) or 1025 (with bias). You should report the following:</p>
+
+			<ul>
+				<li>Training curve: overall accuracy on the <em>training set</em> as a function of the epoch (i.e., complete pass through the training data). It's fine to show this in table form.</li>
+				<li>Overall accuracy on the test set.</li>
+				<li>Confusion matrix.</li>
+			</ul>
+			<br>
+			To get your results, you should tune the following parameters (it is not necessary to separately report results for multiple settings, only report which options you tried and which one worked the best):
+			<ul>
+				<li>Learning rate decay function;</li>
+				<li>Bias vs. no bias;</li>
+				<li>Initialization of weights (zeros vs. random);</li>
+				<li>Ordering of training examples (fixed vs. random);</li>
+				<li>Number of epochs.</li>
+			</ul>
+			<br>
+			<a name="nn"></a>
+
+			<h3 id="part2.2">Part 2.2 Digit Classification with Nearest Neighbor (4 points required for 4-credit students; 2 extra credit points optional for 3-credit students)</h3>
+
+			<p>Implement a k-nearest-neighbor classifier for the digit classification task in Part 2.1. You should play around with different choices of distance or similarity function to find what works the best. In the report, please discuss your choice of distance/similarity function, and give the overall accuracy on the test set <em>as a function of k</em> (for some reasonable range of k, from 1 to 25, you can describe this function with a table and discuss a general trend). For the best choice of k, give the confusion matrix. As a baseline, report the running time for a single query (classify a single instance in the test dataset) by using brute force. Discuss how you can optimize its performance. Finally, compare your nearest-neighbor accuracy to the accuracies you got with Naive Bayes and Perceptron.</p>
+			<a name="part2.extra"></a>
+
+			<h3><a name="part2.extra">Part 2 extra credit (2 points each)</a></h3>
+			Extra credit tasks are worth up to two points each, up to a maximum of 25 percent (maximum extra credit = 6 points for 3-credit students, 8 points for 4-credit students).
+
+			<ul>
+				<li>For digits, it is possible to visualize the learned perceptron weights for each class as an image. Show some visualizations and discuss what they tell us about the model learned by the classifier -- in particular, which locations are the most important/discriminative for each digit. What do the signs of the weights tell us?</li>
+				<li>Implement the differentiable perceptron learning rule and compare its behavior with the non-differentiable one.</li>
+				<li>Apply any other classifier (support vector machine, decision tree, convolutional neural net, etc.) to digits, faces, or text. It is fine to use off-the-shelf code from an existing package (but be sure to cite your sources).</li>
+			</ul>
+
+			<p>&nbsp;</p>
+
+			<h2><a id="report" name="report">Report Checklist</a></h2>
+
+			<h3>Part 1:</h3>
+
+			<ol>
+				<li>For everybody:</li>
+			</ol>
+
+			<ul style="list-style-type: circle; margin-left: 40px;">
+				<li>Briefly discuss your implementation, especially the choice of the smoothing constant.</li>
+				<li>Report classification accuracy for each digit (note: this can be just the diagonal elements on the confusion matrix).</li>
+				<li>Show the confusion matrix.</li>
+				<li>For each digit, show the test tokens from that class that have the highest and lowest posterior probabilities according to your classifier.</li>
+				<li>Take four pairs of digit types that have the highest confusion rates, and for each pair, display feature likelihoods and odds ratio.</li>
+			</ul>
+
+			<ol start="2">
+				<li>For four-credit students:</li>
+			</ol>
+
+			<ul style="list-style-type: circle; margin-left: 40px;">
+				<li>Report test set accuracies for disjoint patches of size 2*2, 2*4, 4*2, 4*4, and for overlapping patches of size 2*2, 2*4, 4*2, 4*4, 2*3, 3*2, 3*3.</li>
+				<li>Discuss trends for the different feature sets.</li>
+				<li>Discuss training and testing running time for different feature sets.</li>
+			</ul>
+			<tt> </tt>
+
+			<h3>Part 2:</h3>
+
+			<ol>
+				<li>For everybody:</li>
+			</ol>
+
+			<ul style="list-style-type: circle; margin-left: 40px;">
+				<li class="li1">Discuss your implementation of perceptron classifier and parameter settings. Show your training curve, overall test-set accuracy, and confusion matrix.</li>
+			</ul>
+
+			<ol start="2">
+				<li>For four-credit students:</li>
+			</ol>
+
+			<ul style="list-style-type: circle; margin-left: 40px;">
+				<li class="li1">Discuss your distance/similarity function, give the overall test set accuracy as a function of k, give confusion matrix for best k. Report running time for a single query by using brute force and discuss optimization measures. Compare your accuracy to Naive Bayes and perceptron.</li>
+			</ul>
+
+			<h3>Extra credit:</h3>
+
+			<ul>
+				<li>We reserve the right to give <strong>bonus points</strong> for any advanced exploration or especially challenging or creative solutions that you implement. Three-credit students always get extra credit for submitting solutions to four-credit problems (at 50% discount). <strong><span style="color:#FF0000">If you submit any work for bonus points, be sure it is clearly indicated in your report.</span></strong></li>
+			</ul>
+
+			<h3>Statement of individual contribution:</h3>
+
+			<ul>
+				<li>All group reports need to include a brief summary of which group member was responsible for which parts of the solution and submitted material. We reserve the right to contact group members individually to verify this information.</li>
+			</ul>
+
+			<p><strong><span style="color:#FF0000"><em>WARNING: You will not get credit for any solutions that you have obtained, but not included in your report!</em></span></strong> For example, if your code prints out path cost and number of nodes expanded on each input, but you do not put down the actual numbers in your report, or if you include pictures/files of your output solutions in the zip file but not in your PDF, then <font color="red"><strong>you will not get credit!</strong></font>. The only exception is animated paths (videos or animated gifs).</p>
+
+			<p>&nbsp;</p>
+
+			<h2><a name="submission">Submission Instructions</a></h2>
+
+			<p>As before, <strong>one designated person from the group</strong> will need to submit on <strong><a href="https://compass2g.illinois.edu/">Compass 2g</a></strong> by the deadline. Three-credit students must upload under <strong>Assignment 3 (three credits)</strong> and four-credit students must upload under <strong>Assignment 3 (four credits)</strong>. Each submission must consist of the following two attachments:</p>
+
+			<ol>
+				<li>A <strong><span style="color:#FF0000">report</span></strong> in <strong>PDF format</strong>. As before, the report should briefly describe your implemented solution and fully answer all the questions posed above. <strong>Remember: you will not get credit for any solutions you have obtained, but not included in the report.</strong>
+
+				<p>All group reports need to include a brief <strong>statement of individual contribution</strong>, i.e., which group member was responsible for which parts of the solution and submitted material.<br>
+				<br>
+				The name of the report file should be <strong>lastname_firstname_MP3.pdf</strong>. Don't forget to include the names of all group members and the number of credit credits at the top of the report.</p>
+				</li>
+				<li>Your <span style="color:#FF0000"><strong>source code</strong></span> compressed to a <strong>single ZIP file</strong>. The code should be well commented, and it should be easy to see the correspondence between what's in the code and what's in the report. You don't need to include executables or various supporting files (e.g., utility libraries) whose content is irrelevant to the assignment. If we find it necessary to run your code in order to evaluate your solution, we will get in touch with you.<br>
+				<br>
+				The name of the code archive should be <strong>lastname_firstname_MP3.zip</strong>.</li>
+			</ol>
+
+			<p>Multiple attempts will be allowed but in most circumstances, only the last submission will be graded. <strong>We reserve the right to take off points for not following directions.</strong></p>
+
+			<p><strong>Late policy: </strong>For every day that your assignment is late, your score gets multiplied by 0.75. The penalty gets saturated after four days, that is, you can still get up to about 32% of the original points by turning in the assignment at all.</p>
+
+			<p>Be sure to also refer to <strong><a href="https://courses.engr.illinois.edu/ece448/sp2018/homework.html">course policies</a></strong> on academic integrity, etc.</p>
+			<tt> </tt></td>
+		</tr>
+		<tr>
+			<td>&nbsp;</td>
+		</tr>
+	</tbody>
+</table>
+</p>
+</body></html>
