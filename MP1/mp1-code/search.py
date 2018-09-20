@@ -153,13 +153,11 @@ def greedy(maze):
 
     start = maze.getStart()
     obj = maze.getObjectives()
-    path = []
 
-    # q = collections.deque( [(start, distance(start, obj))] )
-    # frontier = set()
+    priorityq = [(distance(start, obj), start, [start])]
 
     #(distance to goal, node, path)
-    priorityq = heapq.heapify( [(distance(start, obj), start, [start])] )
+    heapq.heapify( priorityq )
     v = set()
 
 
@@ -177,7 +175,7 @@ def greedy(maze):
             neighbors = maze.getNeighbors(node[0], node[1])
             for n in neighbors:
                 temp = path + [n]
-                heapq.heappush( (distance(n, obj), n, temp) )
+                heapq.heappush(priorityq, (distance(n, obj), n, temp) )
 
     return path, len(v)
 
