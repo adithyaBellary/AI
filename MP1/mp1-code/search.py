@@ -149,12 +149,17 @@ def greedy(maze):
     # TODO: Write your code here
     # return path, num_states_explored
 
-    # start = maze.getStart()
-    # obj = maze.getObjectives()
+    start = maze.getStart()
+    obj = maze.getObjectives()
 
     # q = collections.deque( [(start, distance(start, obj))] )
+    # frontier = set()
+
+    #(distance to goal, node)
+    priorityq = [(distance(start, obj), start)]
 
     # while q:
+    #     node, dist = q.popleft()
 
 
     return [], 0
