@@ -183,7 +183,13 @@ def h(start, node, obj):
     # print(start)
     # print(node)
     # print(obj)
-    return distance(start, node) + distance(node, obj[0])
+    alpha = 2
+    # return distance(start, node) + alpha * distance(node, obj[0])
+    # return distance(start, node) + alpha * euc(node, obj[0])
+    return distance(start, node)
+
+def euc(node, obj):
+    return  ((node[0] - obj[0])**2 + (node[1] - obj[1])**2)**(0.5) 
 
 def astar(maze):
     # TODO: Write your code here
@@ -212,6 +218,5 @@ def astar(maze):
             for n in neighbors:
                 temp = path + [n]
                 heapq.heappush(priorityq, (h(start,n,obj), n, temp) )
-                
-        
+
     return path, len(v)
