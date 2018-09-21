@@ -239,6 +239,9 @@ def astar(maze):
     while priorityq:
         heuristic, node, path, obj_to_see = heapq.heappop(priorityq)
 
+        #recreate the objectives to be seen 
+        OBJ = [ x for x in obj if x not in path  ]
+
         if (node in obj_to_see):
             obj_to_see.remove(node)
 
