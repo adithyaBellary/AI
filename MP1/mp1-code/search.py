@@ -179,14 +179,14 @@ def greedy(maze):
 
     return path, len(v)
 
-def h(start, node, obj):
+def h(path, node, obj):
     # print(start)
     # print(node)
     # print(obj)
-    alpha = 2
+    # alpha = 2
     # return distance(start, node) + alpha * distance(node, obj[0])
     # return distance(start, node) + alpha * euc(node, obj[0])
-    return distance(start, node)
+    return distance(node, obj[0]) + len(path)
 
 def euc(node, obj):
     return  ((node[0] - obj[0])**2 + (node[1] - obj[1])**2)**(0.5) 
@@ -217,6 +217,6 @@ def astar(maze):
             neighbors = maze.getNeighbors(node[0], node[1])
             for n in neighbors:
                 temp = path + [n]
-                heapq.heappush(priorityq, (h(start,n,obj), n, temp) )
+                heapq.heappush(priorityq, (h(path,n,obj), n, temp) )
 
     return path, len(v)
