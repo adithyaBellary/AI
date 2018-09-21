@@ -191,72 +191,71 @@ def h(path, node, obj):
 def euc(node, obj):
     return  ((node[0] - obj[0])**2 + (node[1] - obj[1])**2)**(0.5) 
 
-# def astar(maze):
-#     # TODO: Write your code here
-#     # return path, num_states_explored
-
-#     start = maze.getStart()
-#     #assume we only have one objective for right now
-#     obj = maze.getObjectives()
-
-#     #(heuristic, node, path)
-#     priorityq = [(h(start,start,obj), start, [start])]
-
-#     heapq.heapify(priorityq)
-#     v = set()
-
-#     while priorityq:
-#         heuristic, node, path = heapq.heappop(priorityq)
-
-#         if node in obj:
-#             #if we have reached the goal state
-
-#             if obj.empty():
-#                 break
-#         if node not in v:
-#             v.add(node)
-
-#             neighbors = maze.getNeighbors(node[0], node[1])
-#             for n in neighbors:
-#                 temp = path + [n]
-#                 heapq.heappush(priorityq, (h(path,n,obj), n, temp) )
-
-#     return path, len(v)
-
-
 def astar(maze):
+    # TODO: Write your code here
+    # return path, num_states_explored
+
     start = maze.getStart()
+    #assume we only have one objective for right now
     obj = maze.getObjectives()
+    obj = obj[0]
 
-    obj_to_see = obj
-    path = [start]
+    #(heuristic, node, path)
+    priorityq = [(h([start],start,obj), start, [start])]
 
-    h_min = min([h(start, start, obj_to_see[i]) for i in range(len(obj_to_see))])
-    priorityq = [(h_min, start, path, obj_to_see)]
-
-    v= set()
+    heapq.heapify(priorityq)
+    v = set()
 
     while priorityq:
-        heuristic, node, path, obj_to_see = heapq.heappop(priorityq)
+        heuristic, node, path = heapq.heappop(priorityq)
 
-        #recreate the objectives to be seen 
-        OBJ = [ x for x in obj if x not in path  ]
-
-        if (node in obj_to_see):
-            obj_to_see.remove(node)
-
-            if (len(obj_to_see) == 0):
-                break
-
+        if node == obj:
+            #if we have reached the goal state
+            break
         if node not in v:
             v.add(node)
-            nbrs = maze.getNeighbors(node[0], node[1])
-            for n in nbrs:
-                heuristic = min([h(start, n,obj_to_see[i]) for i in range(len(obj_to_see))])
+
+            neighbors = maze.getNeighbors(node[0], node[1])
+            for n in neighbors:
                 temp = path + [n]
-                heapq.heappush(priorityq, (heuristic, n, temp, obj_to_see))
-    print (path)
+                heapq.heappush(priorityq, (h(path,n,obj), n, temp) )
+
     return path, len(v)
+
+
+# def astar(maze):
+#     start = maze.getStart()
+#     obj = maze.getObjectives()
+
+#     obj_to_see = obj
+#     path = [start]
+
+#     h_min = min([h(start, start, obj_to_see[i]) for i in range(len(obj_to_see))])
+#     priorityq = [(h_min, start, path, obj_to_see)]
+
+#     v= set()
+
+#     while priorityq:
+#         heuristic, node, path, obj_to_see = heapq.heappop(priorityq)
+
+#         #recreate the objectives to be seen 
+#         OBJ = [ x for x in obj if x not in path  ]
+
+#         if (node in obj_to_see):
+#             obj_to_see.remove(node)
+
+#             if (len(obj_to_see) == 0):
+#                 break
+
+#         if node not in v:
+#             v.add(node)
+#             nbrs = maze.getNeighbors(node[0], node[1])
+#             for n in nbrs:
+#                 heuristic = min([h(start, n,obj_to_see[i]) for i in range(len(obj_to_see))])
+#                 temp = path + [n]
+#                 heapq.heappush(priorityq, (heuristic, n, temp, obj_to_see))
+#     print (path)
+#     return path, len(v)
 
 #Approach 1: Apply Dijkstra's algorithm at each node by calling astar to find shortest path at each goal
 #Approach 2: At each step, use heuristic (Manhattan) to calculate nearest goal until all are seen
