@@ -145,7 +145,7 @@ def dfs(maze):
 def distance(a,b): 
     # print("a", a)
     # print("b", b)
-    return abs(a[0] - b[0][0]) + abs(a[1] - b[0][1])
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def greedy(maze):
     # TODO: Write your code here
@@ -154,7 +154,7 @@ def greedy(maze):
     start = maze.getStart()
     obj = maze.getObjectives()
 
-    priorityq = [(distance(start, obj), start, [start])]
+    priorityq = [(distance(start, obj[0]), start, [start])]
 
     #(distance to goal, node, path)
     heapq.heapify( priorityq )
@@ -175,12 +175,43 @@ def greedy(maze):
             neighbors = maze.getNeighbors(node[0], node[1])
             for n in neighbors:
                 temp = path + [n]
-                heapq.heappush(priorityq, (distance(n, obj), n, temp) )
+                heapq.heappush(priorityq, (distance(n, obj[0]), n, temp) )
 
     return path, len(v)
 
+def h(start, node, obj):
+    # print(start)
+    # print(node)
+    # print(obj)
+    return distance(start, node) + distance(node, obj[0])
 
 def astar(maze):
     # TODO: Write your code here
     # return path, num_states_explored
-    return [], 0
+
+    start = maze.getStart()
+    #assume we only have one objective for right now
+    obj = maze.getObjectives()
+
+    #(heuristic, node, path)
+    priorityq = [(h(start,start,obj), start, [start])]
+
+    heapq.heapify(priorityq)
+    v = set()
+
+    while priorityq:
+        heuristic, node, path = heapq.heappop(priorityq)
+
+        if node in obj:
+            #if we have reached the goal state
+            break
+        if node not in v:
+            v.add(node)
+
+            neighbors = maze.getNeighbors(node[0], node[1])
+            for n in neighbors:
+                temp = path + [n]
+                heapq.heappush(priorityq, (h(start,n,obj), n, temp) )
+                
+        
+    return path, len(v)
