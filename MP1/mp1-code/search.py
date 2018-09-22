@@ -32,45 +32,6 @@ def search(maze, searchMethod):
     }.get(searchMethod, [])
    
 
-# def bfs(maze):
-#     # TODO: Write your code here
-#     # return path, num_states_explored
-
-#     #queue 
-#     #use append and popleft to make it a queue
-    
-#     start = maze.getStart()
-#     obj = maze.getObjectives()
-#     print(obj)
-
-#     # (node, path)
-
-#     q = collections.deque([  (start, [start])  ])
-#     v = set()
-
-#     while True:
-#         #while q is not empty
-#         node, path = q.popleft()
-#         # print(current)
-#         #check if current if the goal state
-#         #what if we have multiple goal states
-#         if node in obj:
-#             obj.remove(node)
-#             # print(obj,"\n")
-#             print(node)
-#             if obj == []:
-#                 break
-#         if node not in v:
-#             v.add(node)
-#             #get list of current nodes' neighbors
-#             neighbors = maze.getNeighbors(node[0], node[1])
-#             for n in neighbors:
-#                 temp = path + [n]
-#                 q.append( (n, temp) )
-    
-#     print(path)
-#     return path, len(v)
-
 def bfs(maze):
     # TODO: Write your code here
     # return path, num_states_explored
