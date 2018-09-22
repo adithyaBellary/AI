@@ -96,8 +96,6 @@ def bfs(maze):
         #what if we have multiple goal states
         if node in obj:
             obj.remove(node)
-            # print(obj,"\n")
-            # print(node)
             if obj == []:
                 break
         if node not in v:
@@ -127,9 +125,6 @@ def dfs(maze):
     while q:
         #while q is not empty
         node, path = q.pop()
-        # print(current)
-        #check if current if the goal state
-        #what if we have multiple goal states
         if node in obj:
             break
         if node not in v:
@@ -154,10 +149,8 @@ def greedy(maze):
 
     priorityq = [(distance(start, obj[0]), start, [start])]
 
-    #(distance to goal, node, path)
     heapq.heapify( priorityq )
     v = set()
-
 
     while priorityq:
         #get the min distance 
@@ -178,12 +171,6 @@ def greedy(maze):
     return path, len(v)
 
 def h(path, node, obj):
-    # print(start)
-    # print(node)
-    # print(obj)
-    # alpha = 2
-    # return distance(start, node) + alpha * distance(node, obj[0])
-    # return distance(start, node) + alpha * euc(node, obj[0])
     return len(path) + distance(node, obj) 
 
 def euc(node, obj):
@@ -251,64 +238,8 @@ def astar(maze):
         total_states_sets = total_states_sets.union(minimum[1])
 
         #get ride of the minimum objective
-
         current_node = minimum[2]
-        # current_node = final_path[-1]
 
         obj_list.remove(minimum[2])
 
-    
-    print(final_path)
     return final_path, len(total_states_sets)
-
-
-    
-
-        
-
-
-        
-
-
-
-
-
-
-    return [], 0
-
-# def astar(maze):
-#     start = maze.getStart()
-#     obj = maze.getObjectives()
-
-#     obj_to_see = obj
-#     path = [start]
-
-#     h_min = min([h(start, start, obj_to_see[i]) for i in range(len(obj_to_see))])
-#     priorityq = [(h_min, start, path, obj_to_see)]
-
-#     v= set()
-
-#     while priorityq:
-#         heuristic, node, path, obj_to_see = heapq.heappop(priorityq)
-
-#         #recreate the objectives to be seen 
-#         OBJ = [ x for x in obj if x not in path  ]
-
-#         if (node in obj_to_see):
-#             obj_to_see.remove(node)
-
-#             if (len(obj_to_see) == 0):
-#                 break
-
-#         if node not in v:
-#             v.add(node)
-#             nbrs = maze.getNeighbors(node[0], node[1])
-#             for n in nbrs:
-#                 heuristic = min([h(start, n,obj_to_see[i]) for i in range(len(obj_to_see))])
-#                 temp = path + [n]
-#                 heapq.heappush(priorityq, (heuristic, n, temp, obj_to_see))
-#     print (path)
-#     return path, len(v)
-
-#Approach 1: Apply Dijkstra's algorithm at each node by calling astar to find shortest path at each goal
-#Approach 2: At each step, use heuristic (Manhattan) to calculate nearest goal until all are seen

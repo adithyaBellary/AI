@@ -1,8 +1,7 @@
 from collections import deque
 import heapq
 
-a = [(3, 'Adithya')]
+path = [ (1,2), (2,3), (4,3), (8,8), (9,9), (10,4)  ]
+a = [ (1,2)]
 
-x = (8, 'jflkds')
-heapq.heappush( a, x)
-print(a)
+print([x for x in path if x not in a])
