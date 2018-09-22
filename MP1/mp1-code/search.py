@@ -143,8 +143,6 @@ def dfs(maze):
     return path, len(v)
 
 def distance(a,b): 
-    #print("a", a)
-    #print("b", b)
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def greedy(maze):
@@ -186,19 +184,16 @@ def h(path, node, obj):
     # alpha = 2
     # return distance(start, node) + alpha * distance(node, obj[0])
     # return distance(start, node) + alpha * euc(node, obj[0])
-    return distance(node, obj) + len(path)
+    return len(path) + distance(node, obj) 
 
 def euc(node, obj):
     return  ((node[0] - obj[0])**2 + (node[1] - obj[1])**2)**(0.5) 
 
-def astar(maze):
+def astar_help(maze, node, obj):
     # TODO: Write your code here
     # return path, num_states_explored
 
-    start = maze.getStart()
-    #assume we only have one objective for right now
-    obj = maze.getObjectives()
-    obj = obj[0]
+    start = node
 
     #(heuristic, node, path)
     priorityq = [(h([start],start,obj), start, [start])]
@@ -220,8 +215,66 @@ def astar(maze):
                 temp = path + [n]
                 heapq.heappush(priorityq, (h(path,n,obj), n, temp) )
 
-    return path, len(v)
+    return path, v
 
+def astar(maze):
+
+    start = maze.getStart()
+    obj_list = maze.getObjectives()
+
+    
+    final_path = []
+    total_states_sets = set()
+
+    current_node = start
+
+    while obj_list:
+
+        weight_list = []
+
+        for objective in obj_list:
+            #for every objective
+
+            path, visited = astar_help(maze, current_node, objective)
+
+            if len(weight_list) == 0:
+                minimum = (path, visited, objective)
+            else:
+                if len(path) < len(minimum[0] ):
+                    minimum = (path, visited, objective)
+
+            weight_list.append((path, visited))
+        
+        final_path += minimum[0]
+        if len(obj_list) > 1:
+            final_path.pop()
+        total_states_sets = total_states_sets.union(minimum[1])
+
+        #get ride of the minimum objective
+
+        current_node = minimum[2]
+        # current_node = final_path[-1]
+
+        obj_list.remove(minimum[2])
+
+    
+    print(final_path)
+    return final_path, len(total_states_sets)
+
+
+    
+
+        
+
+
+        
+
+
+
+
+
+
+    return [], 0
 
 # def astar(maze):
 #     start = maze.getStart()
