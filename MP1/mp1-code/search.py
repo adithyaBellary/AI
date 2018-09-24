@@ -163,7 +163,7 @@ def astar_help(maze, node, obj):
                 temp = path + [n]
                 heapq.heappush(priorityq, (h(path,n,obj), n, temp) )
 
-    return path, v
+    return len(path) #, v
 
 def astar(maze):
 
@@ -204,3 +204,109 @@ def astar(maze):
         obj_list.remove(minimum[2])
 
     return final_path, len(total_states_sets)
+
+def h_changed(path, node, obj):
+    return len(path) + distance(node, obj) 
+
+#New Astar
+def astar(maze):
+
+    # need to change the way calculate heuristic funciton, manhattan distance based on next closest node?
+    # should be calculated in heuristic? should node to go to be passed in or stored in heuristic?
+    # need to keep track of which nodes have already visited, there may be a closer node that has already been visited
+    # 2d array? need to know current obj, min of array, if seen obj then set weight to be 10000+idk
+
+    # for every edge, calculate and store weight in 2d list
+    
+    start = maze.getStart()
+    obj_list = maze.getObjectives()
+    temp_obj_list = maze.getObjectives()
+
+    
+    final_path = []
+    distancelist = []
+
+    for row in range(len(obj_list)): distancelist += [[0]*len(obj_list)]
+
+    total_states_sets = set()
+
+    current_obj = start
+
+
+    # initialize distance list with lengths from all objectives to each other
+    for objectivei in range (len(obj_list)):
+        # calc distance from start to objective
+        temppath = astar_help(maze, start, obj_list[objectivei])
+        if objectivei == 0:
+            next_obj = obj_list[objectivei]            # objnode is next obj to go to in manhattan distance, only relevant here for start
+            minimum = temppath
+        else:
+            if (temppath < minimum):
+                minimum = temppath
+                next_obj = obj_list[objectivei]
+
+        # calculate length form obj to all other objs
+        for objectivej in range (len(obj_list)): 
+            if (objectivei == objectivej):
+                distancelist[objectivei][objectivej] = 10000    
+            else:
+                distancelist[objectivei][objectivej] = astar_help(maze, obj_list[objectivei], obj_list[objectivej])
+        
+    print("start:", start)
+    print(temp_obj_list)
+    for i in distancelist:
+        print(i)
+
+    for objectivei in range (len(obj_list)):
+        distancelist[objectivei][obj_list.index(next_obj)] = 10000
+
+
+    # print("distancelist:", distancelist)
+
+    priorityq = [(h([start],start,next_obj), start, [start])]
+
+    heapq.heapify(priorityq)
+    v = set()
+    vtemp = set()
+
+    while priorityq:
+        heuristic, node, path = heapq.heappop(priorityq)
+
+        if len(temp_obj_list)==1: # this will probably change
+            #if we have reached the goal state
+            break
+
+        if node == next_obj:
+            if current_obj != start:
+                temp_obj_list.remove(current_obj)
+                obj_list[obj_list.index(current_obj)] = (-1, -1)
+            current_obj = node
+            #print("current_obj:", current_obj)
+            for objectivei in range (len(obj_list)):
+                distancelist[objectivei][obj_list.index(current_obj)] = 10000
+            # find next closest obj, min of list
+            next_obj = obj_list[(distancelist[obj_list.index(node)]).index(min(distancelist[obj_list.index(node)]))]
+            #print("next_obj:", next_obj)
+            v = v.union(vtemp)
+            vtemp.clear()
+            priorityq = []
+            #print("found")
+            print("num objs in temp_obj_list:", len(temp_obj_list))
+            #for i in distancelist:
+                #print(i)
+
+        #print("(if node in temp_obj_list)current_obj:", current_obj)
+
+        if node not in vtemp:
+            #print("inside 'if node not in vtemp", node)
+            vtemp.add(node)
+            neighbors = maze.getNeighbors(node[0], node[1])
+            for n in neighbors:
+                temp = path + [n]
+                heapq.heappush(priorityq, (h(path,n,next_obj), n, temp) )
+                #print("inside 'for n in neighbors' n:", n)
+        #print(" (if node not in vtemp) current_obj:", current_obj)
+    return path, len(v)
+
+    #return final_path, len(total_states_sets)
+
