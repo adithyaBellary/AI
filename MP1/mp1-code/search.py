@@ -163,64 +163,38 @@ def astar_help(maze, node, obj):
                 temp = path + [n]
                 heapq.heappush(priorityq, (h(path,n,obj), n, temp) )
 
-    return len(path) #, v
-
-def astar(maze):
-
-    start = maze.getStart()
-    obj_list = maze.getObjectives()
-
-    
-    final_path = []
-    total_states_sets = set()
-
-    current_node = start
-
-    while obj_list:
-
-        weight_list = []
-
-        for objective in obj_list:
-            #for every objective
-
-            path, visited = astar_help(maze, current_node, objective)
-
-            if len(weight_list) == 0:
-                minimum = (path, visited, objective)
-            else:
-                if len(path) < len(minimum[0] ):
-                    minimum = (path, visited, objective)
-
-            weight_list.append((path, visited))
-        
-        final_path += minimum[0]
-        if len(obj_list) > 1:
-            final_path.pop()
-        total_states_sets = total_states_sets.union(minimum[1])
-
-        #get ride of the minimum objective
-        current_node = minimum[2]
-
-        obj_list.remove(minimum[2])
-
-    return final_path, len(total_states_sets)
-
-def h_changed(path, node, obj):
-    return len(path) + distance(node, obj) 
+    return len(path) #, 
 
 #New Astar
 def astar(maze):
-
-    # need to change the way calculate heuristic funciton, manhattan distance based on next closest node?
-    # should be calculated in heuristic? should node to go to be passed in or stored in heuristic?
-    # need to keep track of which nodes have already visited, there may be a closer node that has already been visited
-    # 2d array? need to know current obj, min of array, if seen obj then set weight to be 10000+idk
-
     # for every edge, calculate and store weight in 2d list
     
     start = maze.getStart()
     obj_list = maze.getObjectives()
     temp_obj_list = maze.getObjectives()
+
+    if len(obj_list) == 1:
+        
+        #(heuristic, node, path)
+        priorityq = [(h([start],start,obj_list[0]), start, [start])]
+
+        heapq.heapify(priorityq)
+        v = set()
+
+        while priorityq:
+            heuristic, node, path = heapq.heappop(priorityq)
+
+            if node == obj_list[0]:
+                #if we have reached the goal state
+                break
+            if node not in v:
+                v.add(node)
+
+                neighbors = maze.getNeighbors(node[0], node[1])
+                for n in neighbors:
+                    temp = path + [n]
+                    heapq.heappush(priorityq, (h(path,n,obj_list[0]), n, temp) )
+        return path, len(v)
 
     
     final_path = []
@@ -252,16 +226,8 @@ def astar(maze):
             else:
                 distancelist[objectivei][objectivej] = astar_help(maze, obj_list[objectivei], obj_list[objectivej])
         
-    print("start:", start)
-    print(temp_obj_list)
-    for i in distancelist:
-        print(i)
-
     for objectivei in range (len(obj_list)):
         distancelist[objectivei][obj_list.index(next_obj)] = 10000
-
-
-    # print("distancelist:", distancelist)
 
     priorityq = [(h([start],start,next_obj), start, [start])]
 
@@ -272,8 +238,7 @@ def astar(maze):
     while priorityq:
         heuristic, node, path = heapq.heappop(priorityq)
 
-        if len(temp_obj_list)==1: # this will probably change
-            #if we have reached the goal state
+        if len(temp_obj_list)==1: 
             break
 
         if node == next_obj:
@@ -281,32 +246,19 @@ def astar(maze):
                 temp_obj_list.remove(current_obj)
                 obj_list[obj_list.index(current_obj)] = (-1, -1)
             current_obj = node
-            #print("current_obj:", current_obj)
             for objectivei in range (len(obj_list)):
                 distancelist[objectivei][obj_list.index(current_obj)] = 10000
-            # find next closest obj, min of list
             next_obj = obj_list[(distancelist[obj_list.index(node)]).index(min(distancelist[obj_list.index(node)]))]
-            #print("next_obj:", next_obj)
             v = v.union(vtemp)
             vtemp.clear()
             priorityq = []
-            #print("found")
-            print("num objs in temp_obj_list:", len(temp_obj_list))
-            #for i in distancelist:
-                #print(i)
-
-        #print("(if node in temp_obj_list)current_obj:", current_obj)
-
+            
         if node not in vtemp:
-            #print("inside 'if node not in vtemp", node)
             vtemp.add(node)
             neighbors = maze.getNeighbors(node[0], node[1])
             for n in neighbors:
                 temp = path + [n]
                 heapq.heappush(priorityq, (h(path,n,next_obj), n, temp) )
-                #print("inside 'for n in neighbors' n:", n)
-        #print(" (if node not in vtemp) current_obj:", current_obj)
+        
     return path, len(v)
-
-    #return final_path, len(total_states_sets)
 
