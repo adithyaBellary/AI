@@ -39,41 +39,38 @@ def bfs(maze):
     #queue 
     #use append and popleft to make it a queue
     
+    #get the start position
     start = maze.getStart()
+    #get maze objective
     obj = maze.getObjectives()
-    # print(obj)
     path = 0
 
     # (node, path)
-
     q = collections.deque([  (start, [start])  ])
     v = set()
 
     while True:
         #while q is not empty
         node, path = q.popleft()
-        # print(current)
         #check if current if the goal state
-        #what if we have multiple goal states
         if node in obj:
-            obj.remove(node)
-            if obj == []:
-                break
+            break
+        #check if we have seen this node before
         if node not in v:
             v.add(node)
             #get list of current nodes' neighbors
             neighbors = maze.getNeighbors(node[0], node[1])
             for n in neighbors:
+                #and the current node to the existing path
                 temp = path + [n]
                 q.append( (n, temp) )
     
-    # print(path)
     return path, len(v)
 
 
 def dfs(maze):
     # TODO: Write your code here
-    # return path, num_states_explored
+    #get start position
     start = maze.getStart()
     obj = maze.getObjectives()
 
@@ -86,6 +83,7 @@ def dfs(maze):
     while q:
         #while q is not empty
         node, path = q.pop()
+        #check if the node is the goal state
         if node in obj:
             break
         if node not in v:
@@ -93,12 +91,15 @@ def dfs(maze):
             #get list of current nodes' neighbors
             neighbors = maze.getNeighbors(node[0], node[1])
             for n in neighbors:
+                #add node to the path 
                 temp = path + [n]
                 q.append( (n, temp) )
 
     return path, len(v)
 
 def distance(a,b): 
+    #compute manhattan distance 
+    #helper function
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def greedy(maze):
@@ -107,35 +108,33 @@ def greedy(maze):
 
     start = maze.getStart()
     obj = maze.getObjectives()
-
+    #make a priority queue: heuristic is the manhattan distance
+    #(heuristic, node, path)
     priorityq = [(distance(start, obj[0]), start, [start])]
 
-    heapq.heapify( priorityq )
     v = set()
 
     while priorityq:
-        #get the min distance 
+        #pop off the element with the smallest manhattan distance
         dist, node, path = heapq.heappop(priorityq)
-        # print(node)
-        
         if node in obj:
             #we found the goal state
             break
-        
+        #if we have not seen this node before
         if node not in v:
             v.add(node)
+            #get the neighbors
             neighbors = maze.getNeighbors(node[0], node[1])
             for n in neighbors:
+                #append this node to the path
                 temp = path + [n]
+                #heappush pushes the tuple and sorts on the first element,
+                #which is the manhattan distance
                 heapq.heappush(priorityq, (distance(n, obj[0]), n, temp) )
-
     return path, len(v)
 
 def h(path, node, obj):
     return len(path) + distance(node, obj) 
-
-def euc(node, obj):
-    return  ((node[0] - obj[0])**2 + (node[1] - obj[1])**2)**(0.5) 
 
 def astar_help(maze, node, obj):
     # TODO: Write your code here
