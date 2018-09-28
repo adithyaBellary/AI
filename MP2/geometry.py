@@ -15,6 +15,40 @@ import math
 import numpy as np
 from const import *
 
+##### Helper Functions ####
+
+#Calculate the distance from a line to a point
+#Attempt 1
+def distance(P1, P2, Point):
+    #all arguments are tuples for (x, y) coordinates
+    num = abs( ( P2[1] - P1[1] )*Point[0] - ( P2[0] - P1[0] )*Point[1] + P2[0]*P1[1] -  P2[1]*P1[0] )
+    den = math.sqrt( (P2[1] - P1[1])**2 + (P2[0] - P1[0])**2  )
+    return num / den
+
+#Calculate the distance from a point to a line
+#Attempt 2
+def distance_2(P1, P2, Point):
+    #unpack the tuples to x and y corrdinates
+    x1, y1 = P1
+    x2, y2 = P2
+
+    x0, y0 = Point
+
+    #find slope
+    m = (y2 - y1) / (x2 - x1)
+    intercept = y1 - m*x1
+
+    a = -1*m
+    b = 1
+    c = -1*intercept
+
+    d = abs( a*x0 + b*y0 + c) / math.sqrt(a**2 + b**2)
+
+    return d
+
+
+
+
 def computeCoordinate(start, length, angle):
     """Compute the end cooridinate based on the given start position, length and angle.
 
@@ -28,7 +62,7 @@ def computeCoordinate(start, length, angle):
     """
     ## subtract length * math.sin(angle)???
     ## top-left is (0,0)
-    # angle = 2 * math.pi / 180
+
     return (start[0] + length * math.cos(angle), start[1] + length * math.sin(angle))
 
 def doesArmTouchObstacles(armPos, obstacles):
@@ -47,6 +81,8 @@ def doesArmTouchObstacles(armPos, obstacles):
     # print(armPos)
     # print('\n')
 
+    # print(armPos)
+
     for arm in armPos:
         #for each arm link - (start, end)
         for obs in obstacles:
@@ -60,7 +96,7 @@ def doesArmTouchObstacles(armPos, obstacles):
             #will probably affect how the configuration space is transformed
             if distance(arm[0], arm[1], ob_coord) < rad:
                 #if the arm is touching the obstacle, return True
-                print("TOUCHING")
+                print("TOUCHING AN OBSTACLE")
             
                 return True
     return False
@@ -90,6 +126,9 @@ def isArmWithinWindow(armPos, window):
         Return:
             True if all parts are in the window. False it not.
     """
+
+    return True
+
     width = window[0]
     height = window[1]
     boundaries = [ ((0,0), (width, 0)), ##X-axis
@@ -105,19 +144,19 @@ def isArmWithinWindow(armPos, window):
         else:
             #if not, add both the start and end points of the links
             #This should take into account if we have more than 2 links???
-            points.append(armPos[i][0], armPos[i][1])
+            points.append(armPos[i][0])
+            points.append(armPos[i][1])
 
 
-    #check of any of the links hits the boundary lines
-
+    #check of any of the points hits the boundary lines
+    for pt in points:
+        #for each point
+        for b in boundaries:
+            #for each of the boundaries (lines)
+            #check if the point touches the boundary
+            if distance(b[0], b[1], pt) <= 10:
+                print("TOUCHING A BOUNDARY LINEs")
+                return False
+    
     
     return True
-
-    ##### Helper Functions ####
-
-    #Calculate the distance from a line to a point
-    def distance(P1, P2, Point):
-        #all arguments are tuples for (x, y) coordinates
-        num = abs( ( P2[1] - P1[1] )*Point[0] - ( P2[0] - P1[0] )*Point[1] + P2[0]*P1[1] -  P2[1]*P1[0] )
-        den = math.sqrt( (P2[1] - P1[1])**2 + (P2[0] - P1[0])**2  )
-        return num / den
