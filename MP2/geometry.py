@@ -124,7 +124,7 @@ def doesArmTouchGoals(armEnd, goals):
             True if touched. False it not.
     """
 
-    for armEnd in armPos:
+    for arm in armEnd:
         #for each arm link - (start, end)
         for g in goals:
             #for each obstacle
@@ -133,7 +133,7 @@ def doesArmTouchGoals(armEnd, goals):
             goal_coord = (g[0], g[1])
             #if the distance from the end to the goal is less than the radius return True
 
-            if distance(armEnd, goal_coord) < rad:
+            if distance(arm, goal_coord) < rad:
                 #if the arm is touching the obstacle, return True
                 print("TOUCHING AN GOAL")
                 return True
