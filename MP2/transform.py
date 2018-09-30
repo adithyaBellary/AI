@@ -34,5 +34,20 @@ def transformToMaze(arm, goals, obstacles, window, granularity):
             Maze: the maze instance generated based on input arguments.
 
     """
+
+    # need angles values
+    dimension = np.empty(3)
+
+    armLinkList = getArmLimit()
+    for limits in range(len(armLinkList)):
+        minAngle, maxAngle = armLinkList[limits]
+        # calculate rows/cols
+        dimension[limits] = ((maxAngle - minAngle) / (granularity)) + 1
+
+    #initialize 2d array (maze) with dimensions
+    np.empty((dimensions[0], dimensions[1]))
+    
+    # Get starting position
+    alpha, beta = arm.getArmAngle()
     
     pass
