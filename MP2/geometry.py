@@ -19,11 +19,11 @@ from const import *
 
 #Calculate the distance from a line to a point
 #Attempt 1
-def distance(P1, P2, Point):
-    #all arguments are tuples for (x, y) coordinates
-    num = abs( ( P2[1] - P1[1] )*Point[0] - ( P2[0] - P1[0] )*Point[1] + P2[0]*P1[1] -  P2[1]*P1[0] )
-    den = math.sqrt( (P2[1] - P1[1])**2 + (P2[0] - P1[0])**2  )
-    return num / den
+#def distance(P1, P2, Point):
+#    #all arguments are tuples for (x, y) coordinates
+#    num = abs( ( P2[1] - P1[1] )*Point[0] - ( P2[0] - P1[0] )*Point[1] + P2[0]*P1[1] -  P2[1]*P1[0] )
+#    den = math.sqrt( (P2[1] - P1[1])**2 + (P2[0] - P1[0])**2  )
+#    return num / den
 
 #Calculate the distance from a point to a line
 #Attempt 2
@@ -47,7 +47,16 @@ def distance_2(P1, P2, Point):
     return d
 
 
+def distance(end, Point):
+    #unpack the tuples to x and y corrdinates
+    x1, y1 = end
 
+    x0, y0 = Point
+
+    #find slope
+    dist_sq = (y1 - y0)**2 + (x1 - x0)**2
+
+    return math.sqrt(dist_sq)
 
 def computeCoordinate(start, length, angle):
     """Compute the end cooridinate based on the given start position, length and angle.
@@ -94,7 +103,8 @@ def doesArmTouchObstacles(armPos, obstacles):
 
             #might need to make it <= rad???
             #will probably affect how the configuration space is transformed
-            if distance(arm[0], arm[1], ob_coord) < rad:
+
+            if distance2(arm[0], arm[1], ob_coord) < rad:
                 #if the arm is touching the obstacle, return True
                 print("TOUCHING AN OBSTACLE")
             
@@ -113,6 +123,20 @@ def doesArmTouchGoals(armEnd, goals):
         Return:
             True if touched. False it not.
     """
+
+    for armEnd in armPos:
+        #for each arm link - (start, end)
+        for g in goals:
+            #for each obstacle
+            rad = armEnd[2]
+            #unpack the tuple to get the coordinates of the obstacle
+            armEnd_coord = (armEnd[0], armEnd[1])
+            #if the distance from the end to the goal is less than the radius return True
+
+            if distance(arm[1], ob_coord) < rad:
+                #if the arm is touching the obstacle, return True
+                print("TOUCHING AN GOAL")
+                return True
     return False
 
 
