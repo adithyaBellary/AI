@@ -27,12 +27,12 @@ from const import *
 
 #Calculate the distance from a point to a line
 #Attempt 2
-def distance2(P1, P2, Point):
+def distance2(start, end, obstacle):
     #unpack the tuples to x and y corrdinates
-    x1, y1 = P1
-    x2, y2 = P2
+    x1, y1 = start
+    x2, y2 = end
 
-    x0, y0 = Point
+    x0, y0 = obstacle
 
     #find slope
     m = (y2 - y1) / (x2 - x1)
@@ -45,7 +45,6 @@ def distance2(P1, P2, Point):
     d = abs( a*x0 + b*y0 + c) / math.sqrt(a**2 + b**2)
 
     return d
-
 
 def distance(end, Point):
     #unpack the tuples to x and y corrdinates
@@ -104,7 +103,7 @@ def doesArmTouchObstacles(armPos, obstacles):
             #might need to make it <= rad???
             #will probably affect how the configuration space is transformed
 
-            if distance2(arm[0], arm[1], ob_coord) < rad:
+            if distance2(arm[0], arm[1], ob_coord) <= rad:
                 #if the arm is touching the obstacle, return True
                 print("TOUCHING AN OBSTACLE")
             
@@ -123,8 +122,6 @@ def doesArmTouchGoals(armEnd, goals):
         Return:
             True if touched. False it not.
     """
-
-    
     for g in goals:
         #for each obstacle
         rad = g[2]
@@ -132,11 +129,11 @@ def doesArmTouchGoals(armEnd, goals):
         goal_coord = (g[0], g[1])
         #if the distance from the end to the goal is less than the radius return True
 
-        if distance(armEnd, goal_coord) < rad:
+        if distance(armEnd, goal_coord) <= rad:
             #if the arm is touching the obstacle, return True
             print("TOUCHING AN GOAL")
             return True
-    return False
+    return False 
 
 
 def isArmWithinWindow(armPos, window):
