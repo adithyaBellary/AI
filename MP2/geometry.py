@@ -27,7 +27,7 @@ from const import *
 
 #Calculate the distance from a point to a line
 #Attempt 2
-def distance_2(P1, P2, Point):
+def distance2(P1, P2, Point):
     #unpack the tuples to x and y corrdinates
     x1, y1 = P1
     x2, y2 = P2
@@ -128,12 +128,12 @@ def doesArmTouchGoals(armEnd, goals):
         #for each arm link - (start, end)
         for g in goals:
             #for each obstacle
-            rad = armEnd[2]
+            rad = g[2]
             #unpack the tuple to get the coordinates of the obstacle
-            armEnd_coord = (armEnd[0], armEnd[1])
+            goal_coord = (g[0], g[1])
             #if the distance from the end to the goal is less than the radius return True
 
-            if distance(arm[1], ob_coord) < rad:
+            if distance(armEnd, goal_coord) < rad:
                 #if the arm is touching the obstacle, return True
                 print("TOUCHING AN GOAL")
                 return True
