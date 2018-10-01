@@ -70,8 +70,9 @@ def computeCoordinate(start, length, angle):
     """
     ## subtract length * math.sin(angle)???
     ## top-left is (0,0)
+    radian = float(angle*(math.pi / 180))
 
-    return (start[0] + length * math.cos(angle), start[1] + length * math.sin(angle))
+    return (start[0] - length * math.cos(radian), start[1] - length * math.sin(radian))
 
 def doesArmTouchObstacles(armPos, obstacles):
     """Determine whether the given arm links touch obstacles
@@ -83,13 +84,6 @@ def doesArmTouchObstacles(armPos, obstacles):
         Return:
             True if touched. False it not.
     """    
-    # x = 
-    # for i in obstacles:
-    #     print(i)
-    # print(armPos)
-    # print('\n')
-
-    # print(armPos)
 
     for arm in armPos:
         #for each arm link - (start, end)
@@ -100,14 +94,27 @@ def doesArmTouchObstacles(armPos, obstacles):
             ob_coord = (obs[0], obs[1])
             #if the distance from the line to the obstacle is less than the radius return True
 
-            #might need to make it <= rad???
             #will probably affect how the configuration space is transformed
-
-            if distance2(arm[0], arm[1], ob_coord) <= rad:
-                #if the arm is touching the obstacle, return True
-                print("TOUCHING AN OBSTACLE")
             
-                return True
+            if (arm[0][0] != arm[1][0]) and (distance2(arm[0], arm[1], ob_coord) <= rad):
+            #if the arm is touching the obstacle, return True
+                print("TOUCHING AN OBSTACLE")
+                #return True
+
+    #Given start, end, calculate vector projection using d = magnitude(arm vector) * cos
+    # print(armPos)
+    # for arm in armPos:
+    #     for obs in obstacles:
+    #         ob_coord = (obs[0], obs[1])
+    #         arm_coord = (arm[0], arm[1])
+    #         print("ARM: ", arm_coord)
+    #         print("OBS: ", ob_coord)
+    #         dist = distance(arm_coord, ob_coord) * math.cos((arm.getArmAngle())*(math.pi / 180))
+    #         rad = obs[2]
+    #         if(dist <= rad):
+    #             print("Obstacle Found")
+    #             return True
+
     return False
 
 
@@ -147,8 +154,6 @@ def isArmWithinWindow(armPos, window):
             True if all parts are in the window. False it not.
     """
 
-    return True
-
     width = window[0]
     height = window[1]
     boundaries = [ ((0,0), (width, 0)), ##X-axis
@@ -174,7 +179,7 @@ def isArmWithinWindow(armPos, window):
         for b in boundaries:
             #for each of the boundaries (lines)
             #check if the point touches the boundary
-            if distance(b[0], b[1], pt) <= 10:
+            if (b[0][0] != b[1][0]) and (distance2(b[0], b[1], pt) == 0):
                 print("TOUCHING A BOUNDARY LINEs")
                 return False
     

@@ -45,9 +45,20 @@ def transformToMaze(arm, goals, obstacles, window, granularity):
         dimension[limits] = ((maxAngle - minAngle) / (granularity)) + 1
 
     #initialize 2d array (maze) with dimensions
-    np.empty((dimensions[0], dimensions[1]))
+    new_maze = np.empty((dimensions[0], dimensions[1]))
     
     # Get starting position
     alpha, beta = arm.getArmAngle()
     
+    #Get wall and goal positions    
+    for row in range(len(new_maze)):
+        for col in range(len(new_maze[0])):
+            if(obstacles.index((row,col))):
+                new_maze[row][col] = '%'
+            elif(goals.index((row,col))):
+                new_maze[row][col] = '.'
+
+
+    #maze = Maze(new_maze, , granularity)
+
     pass
