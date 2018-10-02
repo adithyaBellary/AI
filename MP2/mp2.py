@@ -74,6 +74,8 @@ class Application:
             currAngle[i] = self.arm.getArmAngle()[i]
         self.gameLoop()        
 
+        # print("current angle: ", currAngle)
+
         if not self.__human:
             print("Transforming a map configuration to a maze...")
             maze = transformToMaze(self.arm, self.goals, self.obstacles, self.window, granularity)
@@ -95,9 +97,12 @@ class Application:
                 self.running = False                
 
             if self.__human:                
-                alpha, beta, gamma = currAngle                
+                alpha, beta, gamma = currAngle  
+
+
                 if (keys[K_z]):                    
                     alpha += granularity if isValueInBetween(self.armLimits[ALPHA], alpha+granularity) else 0
+                    # print("alpha: ", alpha)
 
                 if (keys[K_x]):                    
                     alpha -= granularity if isValueInBetween(self.armLimits[ALPHA], alpha-granularity) else 0
@@ -114,7 +119,10 @@ class Application:
                 if (keys[K_w]):                    
                     gamma -= granularity if isValueInBetween(self.armLimits[GAMMA], gamma-granularity) else 0
 
-                newAngle = (alpha, beta, gamma)                
+                newAngle = (alpha, beta, gamma)   
+
+                # newAngle = (90, 0, 0)
+
                 tempArm = copy.deepcopy(self.arm)
                 tempArm.setArmAngle(newAngle)
                 armEnd = tempArm.getEnd()

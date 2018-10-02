@@ -34,31 +34,51 @@ def transformToMaze(arm, goals, obstacles, window, granularity):
             Maze: the maze instance generated based on input arguments.
 
     """
-
-    # need angles values
-    dimension = np.empty(3)
-
-    armLinkList = getArmLimit()
+    dimension = np.empty(2)
+    offsets = []
+    armLinkList = arm.getArmLimit()
+    start_position = arm.getArmPos()
     for limits in range(len(armLinkList)):
         minAngle, maxAngle = armLinkList[limits]
         # calculate rows/cols
         dimension[limits] = ((maxAngle - minAngle) / (granularity)) + 1
-
+        offsets.append(minAngle)
     #initialize 2d array (maze) with dimensions
-    new_maze = np.empty((dimensions[0], dimensions[1]))
-    
-    # Get starting position
-    alpha, beta = arm.getArmAngle()
-    
+    new_maze = np.zeros((int(dimension[0]), int(dimension[1])))
+
+    m = []
+    gran = 2
     #Get wall and goal positions    
-    for row in range(len(new_maze)):
-        for col in range(len(new_maze[0])):
-            if(obstacles.index((row,col))):
-                new_maze[row][col] = '%'
-            elif(goals.index((row,col))):
-                new_maze[row][col] = '.'
+    for a in range(new_maze.shape[0]):
+        t = []
+        for b in range(new_maze.shape[1]):
+            #check if we are at the initialization position
+            
+            flag = False
+            angle = idxToAngle((a,b), offsets,gran )
+            arm.setArmAngle(angle)
+            position = arm.getArmPos()
+            #set start point
+            if position == start_position:
+                t.append('P')
+                flag = True
+            #instantiate a new arm for each alpha and beta values
+            arm_positions = arm.getArmPos()
+            #check if we are at the goal
 
+            if doesArmTouchGoals(arm_positions[1][1], goals):
+                t.append('.')
+                flag = True
+            
+            #check if we are at an obstacle
+            if doesArmTouchObstacles(arm_positions, obstacles) or not  isArmWithinWindow(arm_positions, window):
+                t.append('%')
+                flag = True
+            
+            if flag == False:
+                t.append(' ')
+        m.append(t)
+            
+    maze = Maze(m,offsets , granularity)
 
-    #maze = Maze(new_maze, , granularity)
-
-    pass
+    return maze

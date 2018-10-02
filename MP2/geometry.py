@@ -19,169 +19,149 @@ from const import *
 
 #Calculate the distance from a line to a point
 #Attempt 1
-#def distance(P1, P2, Point):
-#    #all arguments are tuples for (x, y) coordinates
-#    num = abs( ( P2[1] - P1[1] )*Point[0] - ( P2[0] - P1[0] )*Point[1] + P2[0]*P1[1] -  P2[1]*P1[0] )
-#    den = math.sqrt( (P2[1] - P1[1])**2 + (P2[0] - P1[0])**2  )
-#    return num / den
+def distance(P1, P2, Point):
+   #all arguments are tuples for (x, y) coordinates
+	x1, y1 = P1
+	x2, y2 = P2
+	x0, y0 = Point
+	dx = x2-x1
+	dy = y2-y1
+
+	u =  ((x0 - x1) * dx + (y0 - y1) * dy) / float(dx**2 + dy**2)
+
+	if u > 1:
+		u = 1
+	elif u < 0:
+		u = 0
+
+	x = x1 + u * dx
+	y = y1 + u * dy
+
+	dist = math.sqrt((x - x0)**2 + (y - y0)**2)
+
+	return dist
 
 #Calculate the distance from a point to a line
 #Attempt 2
 def distance2(start, end, obstacle):
-    #unpack the tuples to x and y corrdinates
-    x1, y1 = start
-    x2, y2 = end
+	#unpack the tuples to x and y corrdinates
+	x1, y1 = start
+	x2, y2 = end
 
-    x0, y0 = obstacle
+	x0, y0 = obstacle
+	#find slope
+	m = (y2 - y1) / (x2 - x1)
+	intercept = y1 - m*x1
 
-    #find slope
-    m = (y2 - y1) / (x2 - x1)
-    intercept = y1 - m*x1
+	a = 1*m
+	b = -1
+	c = 1*intercept
 
-    a = -1*m
-    b = 1
-    c = -1*intercept
+	d = abs( a*x0 + b*y0 + c) / math.sqrt(a**2 + b**2)
+	return d
 
-    d = abs( a*x0 + b*y0 + c) / math.sqrt(a**2 + b**2)
+def point_distance(end, Point):
+	#unpack the tuples to x and y corrdinates
+	x1, y1 = end
 
-    return d
+	x0, y0 = Point
+	dist_sq = (y1 - y0)**2 + (x1 - x0)**2
 
-def distance(end, Point):
-    #unpack the tuples to x and y corrdinates
-    x1, y1 = end
-
-    x0, y0 = Point
-
-    #find slope
-    dist_sq = (y1 - y0)**2 + (x1 - x0)**2
-
-    return math.sqrt(dist_sq)
+	return math.sqrt(dist_sq)
 
 def computeCoordinate(start, length, angle):
-    """Compute the end cooridinate based on the given start position, length and angle.
+	"""Compute the end cooridinate based on the given start position, length and angle.
 
-        Args:
-            start (tuple): base of the arm link. (x-coordinate, y-coordinate)
-            length (int): length of the arm link
-            angle (int): degree of the arm link from x-axis to couter-clockwise
+		Args:
+			start (tuple): base of the arm link. (x-coordinate, y-coordinate)
+			length (int): length of the arm link
+			angle (int): degree of the arm link from x-axis to couter-clockwise
 
-        Return:
-            End position of the arm link, (x-coordinate, y-coordinate)
-    """
-    ## subtract length * math.sin(angle)???
-    ## top-left is (0,0)
-    radian = float(angle*(math.pi / 180))
+		Return:
+			End position of the arm link, (x-coordinate, y-coordinate)
+	"""
+	radian = float(angle*(math.pi / 180))
 
-    return (start[0] - length * math.cos(radian), start[1] - length * math.sin(radian))
+	return (start[0] + length * math.cos(radian), start[1] - length * math.sin(radian))
 
 def doesArmTouchObstacles(armPos, obstacles):
-    """Determine whether the given arm links touch obstacles
+	"""Determine whether the given arm links touch obstacles
 
-        Args:
-            armPos (list): start and end position of all arm links [(start, end)]
-            obstacles (list): x-, y- coordinate and radius of obstacles [(x, y, r)]
+		Args:
+			armPos (list): start and end position of all arm links [(start, end)]
+			obstacles (list): x-, y- coordinate and radius of obstacles [(x, y, r)]
 
-        Return:
-            True if touched. False it not.
-    """    
+		Return:
+			True if touched. False it not.
+	"""    
+	for i in range(len(armPos)):
+		arm = armPos[i]
+		#for each arm link - (start, end)
+		for j in range(len(obstacles)):
+			obs = obstacles[j]
+			#for each obstacle
+			rad = obs[2]
+			#unpack the tuple to get the coordinates of the obstacle
+			ob_coord = (obs[0], obs[1])
+			#if the distance from the line to the obstacle is less than the radius return True
 
-    for arm in armPos:
-        #for each arm link - (start, end)
-        for obs in obstacles:
-            #for each obstacle
-            rad = obs[2]
-            #unpack the tuple to get the coordinates of the obstacle
-            ob_coord = (obs[0], obs[1])
-            #if the distance from the line to the obstacle is less than the radius return True
-
-            #will probably affect how the configuration space is transformed
-            
-            if (arm[0][0] != arm[1][0]) and (distance2(arm[0], arm[1], ob_coord) <= rad):
-            #if the arm is touching the obstacle, return True
-                print("TOUCHING AN OBSTACLE")
-                #return True
-
-    #Given start, end, calculate vector projection using d = magnitude(arm vector) * cos
-    # print(armPos)
-    # for arm in armPos:
-    #     for obs in obstacles:
-    #         ob_coord = (obs[0], obs[1])
-    #         arm_coord = (arm[0], arm[1])
-    #         print("ARM: ", arm_coord)
-    #         print("OBS: ", ob_coord)
-    #         dist = distance(arm_coord, ob_coord) * math.cos((arm.getArmAngle())*(math.pi / 180))
-    #         rad = obs[2]
-    #         if(dist <= rad):
-    #             print("Obstacle Found")
-    #             return True
-
-    return False
+			d = distance(arm[0], arm[1], ob_coord)
+			if (arm[0][0] != arm[1][0]) and (d <= (rad)):
+				#first condition to avoid divide by 0 (the line is vertical and slope is inf)
+				#if the arm is touching the obstacle, return True
+				return True
+	return False
 
 
 
 def doesArmTouchGoals(armEnd, goals):
-    """Determine whether the given arm links touch goals
+	"""Determine whether the given arm links touch goals
 
-        Args:
-            armEnd (tuple): the arm tick position, (x-coordinate, y-coordinate)
-            goals (list): x-, y- coordinate and radius of goals [(x, y, r)]
+		Args:
+			armEnd (tuple): the arm tick position, (x-coordinate, y-coordinate)
+			goals (list): x-, y- coordinate and radius of goals [(x, y, r)]
 
-        Return:
-            True if touched. False it not.
-    """
-    for g in goals:
-        #for each obstacle
-        rad = g[2]
-        #unpack the tuple to get the coordinates of the obstacle
-        goal_coord = (g[0], g[1])
-        #if the distance from the end to the goal is less than the radius return True
-
-        if distance(armEnd, goal_coord) <= rad:
-            #if the arm is touching the obstacle, return True
-            print("TOUCHING AN GOAL")
-            return True
-    return False 
+		Return:
+			True if touched. False it not.
+	"""
+	for g in goals:
+		#for each obstacle
+		rad = g[2]
+		#unpack the tuple to get the coordinates of the obstacle
+		goal_coord = (g[0], g[1])
+		#if the distance from the end to the goal is less than the radius return True
+		if point_distance(armEnd, goal_coord) <= (rad+0.1):
+			# print(point_distance(armEnd, goal_coord))
+			return True
+	return False 
 
 
 def isArmWithinWindow(armPos, window):
-    """Determine whether the given arm stays in the window
+	"""Determine whether the given arm stays in the window
 
-        Args:
-            armPos (list): start and end position of all arm links [(start, end)]
-            window (tuple): (width, height) of the window
+		Args:
+			armPos (list): start and end position of all arm links [(start, end)]
+			window (tuple): (width, height) of the window
 
-        Return:
-            True if all parts are in the window. False it not.
-    """
+		Return:
+			True if all parts are in the window. False it not.
+	"""
 
-    width = window[0]
-    height = window[1]
-    boundaries = [ ((0,0), (width, 0)), ##X-axis
-                   ((0,0), (0,height)), ##Y-axis
-                   ((width, 0), (width, height)), ##vertical line at (width, 0) 
-                   ((0,height), (width, height)) ] ##horizontal line at (0, height)
-    points = []
-    for i in range(len(armPos)):
-        if i == 0:
-            #if we are on the first link
-            #we only care about the end point, not the start because that point does not move
-            points.append(armPos[i][1])
-        else:
-            #if not, add both the start and end points of the links
-            #This should take into account if we have more than 2 links???
-            points.append(armPos[i][0])
-            points.append(armPos[i][1])
+	width = window[0]
+	height = window[1]
 
+	for arm in armPos[1:]:
+		#for each arm (ignore the first arm)
+		start = arm[0]
+		end = arm[1]
 
-    #check of any of the points hits the boundary lines
-    for pt in points:
-        #for each point
-        for b in boundaries:
-            #for each of the boundaries (lines)
-            #check if the point touches the boundary
-            if (b[0][0] != b[1][0]) and (distance2(b[0], b[1], pt) == 0):
-                print("TOUCHING A BOUNDARY LINEs")
-                return False
-    
-    
-    return True
+		if (start[1] > height) or (start[1] < 0):
+			return False
+		if (start[0] > width) or (start[0] < 0):
+			return False
+		if (end[1] > height) or (end[1] < 0):
+			return False
+		if (end[0] > width) or (end[0] < 0):
+			return False
+		
+	return True

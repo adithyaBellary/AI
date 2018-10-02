@@ -1,11 +1,15 @@
 [BasicMap]
 Window : (300, 200)                     # (Width, Height)
 
-ArmBase : (150, 200)                    # (x-coordinate, y-coordinate) 
+ArmBase :        (150, 200)                    # (x-coordinate, y-coordinate) 
 
 ArmLinks : [
                 (100, 90, (0, 180)),    # (length, initial angle, (min angle, max angle)
-                (50, 60, (-150, 150)),                 
+                (50, 60, (-150, 150)),
+
+                #(40, 90, (0, 180)),
+                #(40, 90, (-150, 150)),
+
            ]
 
 Obstacles : [
