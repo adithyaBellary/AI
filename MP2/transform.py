@@ -41,13 +41,13 @@ def transformToMaze(arm, goals, obstacles, window, granularity):
     for limits in range(len(armLinkList)):
         minAngle, maxAngle = armLinkList[limits]
         # calculate rows/cols
-        dimension[limits] = ((maxAngle - minAngle) / (granularity)) + 1
+        dimension[limits] = int(math.ceil((maxAngle - minAngle) / (granularity)) + 1)
         offsets.append(minAngle)
     #initialize 2d array (maze) with dimensions
     new_maze = np.zeros((int(dimension[0]), int(dimension[1])))
 
     m = []
-    gran = 2
+    #gran = 2
     #Get wall and goal positions    
     for a in range(new_maze.shape[0]):
         t = []
@@ -55,7 +55,7 @@ def transformToMaze(arm, goals, obstacles, window, granularity):
             #check if we are at the initialization position
             
             flag = False
-            angle = idxToAngle((a,b), offsets,gran )
+            angle = idxToAngle((a,b), offsets,granularity )
             arm.setArmAngle(angle)
             position = arm.getArmPos()
             #set start point
