@@ -2,6 +2,7 @@ import numpy as np
 import math
 import itertools
 from collections import deque
+import heapq
 
 import time
 
@@ -96,20 +97,37 @@ def solve(constraints):
 	# print('colList: ', colList[0])
 
 	for x in range(dim0):
-		print("rowlist: ", rowList[x])
-		xDomains.append((x, getDomain(rowList[x], dim0)))
-	print('here\n\n')
+		# print("rowlist: ", rowList[x])
+		domain = getDomain(rowList[x], dim0)
+		xDomains.append((len(domain),'x', x, domain))
+	
 	for y in range(dim1):
-		print('colList: ', colList[y])
-		yDomains.append((y, getDomain(colList[y], dim1)))
+		# print('colList: ', colList[y])
+		domain = getDomain(colList[y], dim1)
+		yDomains.append((len(domain),'y', y, domain))
 
-	# end = time.time()
-	# print(end - s)
-	# print(xDomains)
-	# xDomains = np.array(xDomains)
-	# print('x domain shape: ', xDomains.shape)
 
-	# for y in range(len())
+	#sort the x and y domains so that we can start with the most constrained index
+	heapq.heapify(xDomains)
+	heapq.heapify(yDomains)
+	
+	# for i in xDomains:
+	# 	print(i, '\n')
+
+	
+	if xDomains[0][0] < yDomains[0][0]:
+		min_constrained = xDomains[0]
+	else:
+		min_constrained = yDomains[0]
+
+	dfs_stack = deque(min_constrained)
+	# print(dfs_stack)
+
+	while dfs_stack:
+
+		length, axis, idx, dom = dfs_stack.pop()
+
+		
 
 	
 
@@ -120,6 +138,35 @@ def solve(constraints):
 #############################################
 # 				HELPER FUNCTIONS
 #############################################
+
+def dfs(maze):
+    # TODO: Write your code here
+    #get start position
+    start = maze.getStart()
+    obj = maze.getObjectives()
+
+    #stack 
+    #use append and pop to make it a stack
+    # (node, path)
+    q = deque([  (start, [start])  ])
+    v = set()
+
+    while q:
+        #while q is not empty
+        node, path = q.pop()
+        #check if the node is the goal state
+        if node in obj:
+            break
+        if node not in v:
+            v.add(node)
+            #get list of current nodes' neighbors
+            neighbors = maze.getNeighbors(node[0], node[1])
+            for n in neighbors:
+                #add node to the path 
+                temp = path + [n]
+                q.append( (n, temp) )
+
+    return path, len(v)
 
 def getDomain(constraints, dimension):
 
