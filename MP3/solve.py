@@ -3,6 +3,8 @@ import math
 import itertools
 from collections import deque
 
+import time
+
 def solve(constraints):
 	"""
 	Implement me!!!!!!!
@@ -75,11 +77,39 @@ def solve(constraints):
 
 
 	"""
+	# s = time.time()
+
+
 	dim0 = len(constraints[0])
 	dim1 = len(constraints[1])
 
 	rowList = constraints[0]
 	colList = constraints[1]
+
+	xDomains = []
+	yDomains = []
+
+	# for i in rowList:
+	# 	print(i)
+
+	# print('rowlist: ', len(rowList))
+	# print('colList: ', colList[0])
+
+	for x in range(dim0):
+		print("rowlist: ", rowList[x])
+		xDomains.append((x, getDomain(rowList[x], dim0)))
+	print('here\n\n')
+	for y in range(dim1):
+		print('colList: ', colList[y])
+		yDomains.append((y, getDomain(colList[y], dim1)))
+
+	# end = time.time()
+	# print(end - s)
+	# print(xDomains)
+	# xDomains = np.array(xDomains)
+	# print('x domain shape: ', xDomains.shape)
+
+	# for y in range(len())
 
 	
 
@@ -91,7 +121,7 @@ def solve(constraints):
 # 				HELPER FUNCTIONS
 #############################################
 
-def getDomain(constraints, dimension=5):
+def getDomain(constraints, dimension):
 
 	runs = [i for i, j in constraints]
 	colors  = [j for i, j in constraints]
@@ -101,6 +131,7 @@ def getDomain(constraints, dimension=5):
 	q = deque([colors])
 	masterList_ = []
 	
+
 	while q:
 		#while the queue is empty
 		arr = q.pop()
@@ -112,7 +143,9 @@ def getDomain(constraints, dimension=5):
 			for i in range(len(arr) + 1):
 				temp = arr.copy()
 				temp.insert(i, 0)
-				q.append(temp)
+				if temp not in q:
+					q.append(temp)
+	
 	
 	#Now incorporate runs
 	newMasterList = []
@@ -128,6 +161,7 @@ def getDomain(constraints, dimension=5):
 				runCounter += 1
 				# print(runCounter)
 		newMasterList.append(newList)
+	
 					
 	# for i in newMasterList:
 	#     print(i)
