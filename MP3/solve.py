@@ -93,26 +93,34 @@ def solve(constraints):
 	# for i in rowList:
 	# 	print(i)
 
-	# print('rowlist: ', len(rowList))
-	# print('colList: ', colList[0])
+	# print('rowlist: ', rowList)
+	# print('colList: ', colList)
 
 	for x in range(dim0):
 		# print("rowlist: ", rowList[x])
-		domain = getDomain(rowList[x], dim0)
+		domain = getDomain(rowList[x], dim1)
+		#heapq.heappush(xDomains, (len(domain),'x', x, domain))
 		xDomains.append((len(domain),'x', x, domain))
 	
 	for y in range(dim1):
 		# print('colList: ', colList[y])
-		domain = getDomain(colList[y], dim1)
+		domain = getDomain(colList[y], dim0)
+		#heapq.heappush(yDomains, (len(domain),'y', y, domain))
 		yDomains.append((len(domain),'y', y, domain))
 
-
-	#sort the x and y domains so that we can start with the most constrained index
-	heapq.heapify(xDomains)
-	heapq.heapify(yDomains)
-	
 	# for i in xDomains:
 	# 	print(i, '\n')
+	#sort the x and y domains so that we can start with the most constrained index
+	# heapq.heapify(xDomains)
+	# heapq.heapify(yDomains)
+	
+	print('xdomains')
+	for i in xDomains:
+		print(i, '\n')
+
+	print('ydomains')
+	for i in yDomains:
+		print(i, '\n')
 
 	
 	if xDomains[0][0] < yDomains[0][0]:
@@ -120,16 +128,57 @@ def solve(constraints):
 	else:
 		min_constrained = yDomains[0]
 
-	dfs_stack = deque(min_constrained)
-	# print(dfs_stack)
+	dfs_stack = deque([min_constrained])
+
+	a = [1,1,1,0]
+	b = [[1,0,1,0],
+		 [0,1,0,1]]
+
+	# print(isStateAllowed(b, a))
+
+	levelSolution = []
+	
+	temp_grid = np.zeros((dim0, dim1))
+
+	levelSolution.append(temp_grid)
+
+	# x or y, index, one possible configuration
+
+	#how to add onto stack
+	for config in xDomain[index][3]:
+		dfs_stack.append((xDomains[index][1], xDomains[index][2], config))
 
 	while dfs_stack:
 
-		length, axis, idx, dom = dfs_stack.pop()
+		axis, current_index, current_config = dfs_stack.pop()
+		print(dom)
 
+		if isNonogramAllowed():
+			break
+
+		else:
+			# Add popped tuple onto the temp grid
+			new_temp_grid = levelSolution[prev_good_index] #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
 		
+			# check is state allowed
+			tempAllowed = isStateAllowed() #check if this added state is allowed 
+			
+			# if allowed, add new configs at unseen opposite coordinate
+			if (tempAllowed):
+				#check whether currently on x or y axis
+				if (axis == 'x'): #xaxis
+					for config in yDomain[index][3]: #change index smart, find index that hasnt been searched yet (next best constrained index in Domain)
+						dfs_stack.append((yDomains[index][1], yDomains[index][2], config))
+				if (axis == 'y'): #yaxis
+					for config in xDomain[index][3]: #change index smart, find index that hasnt been searched yet (next best constrained index in Domain)
+						dfs_stack.append((xDomains[index][1], xDomains[index][2], config))
 
-	
+			# else just set down the first configuration in the list of domains
+			else:
+				
+
+		test = dom[0]
+
 
 	return np.random.randint(2, size=(dim0, dim1))
 
@@ -138,6 +187,31 @@ def solve(constraints):
 #############################################
 # 				HELPER FUNCTIONS
 #############################################
+
+def isStateAllowed(constraints, configuration):
+	#temp_grid: our full grid so far
+	#constraint: list of lists
+	#configuration: The configuration we are testing
+
+	for con in constraints:
+		inv_con = [1 if i == 0 else 0 for i in con]
+		temp = [i | j for i, j in zip(inv_con, configuration)]
+		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
+		if 0 not in temp:
+			#there is a configuration that works
+			return True	
+
+	return False
+
+def isNonogramAllowed(constraints, configuration):
+	#temp_grid: our full grid so far
+	#constraint: list of lists
+	#configuration: The configuration we are testing
+
+	isStateAllowed() #iterate a bunch of times for each coordinate
+
+	return False
+
 
 def dfs(maze):
     # TODO: Write your code here
@@ -191,6 +265,8 @@ def getDomain(constraints, dimension):
 				temp = arr.copy()
 				temp.insert(i, 0)
 				if temp not in q:
+					# print('temp: ', temp)
+					# print(len(temp))
 					q.append(temp)
 	
 	
