@@ -3,6 +3,7 @@ import math
 import itertools
 from collections import deque
 import heapq
+import copy
 
 import time
 
@@ -114,73 +115,104 @@ def solve(constraints):
 	# heapq.heapify(xDomains)
 	# heapq.heapify(yDomains)
 	
-	print('xdomains')
-	for i in xDomains:
-		print(i, '\n')
+	# print('xdomains')
+	# for i in xDomains:
+	# 	print(i, '\n')
 
-	print('ydomains')
-	for i in yDomains:
-		print(i, '\n')
+	# print('ydomains')
+	# for i in yDomains:
+	# 	print(i, '\n')
 
 	
-	if xDomains[0][0] < yDomains[0][0]:
-		min_constrained = xDomains[0]
-	else:
-		min_constrained = yDomains[0]
+	# if xDomains[0][0] < yDomains[0][0]:
+	# 	min_constrained = xDomains[0]
+	# else:
+	# 	min_constrained = yDomains[0]
 
-	dfs_stack = deque([min_constrained])
-
-	a = [1,1,1,0]
-	b = [[1,0,1,0],
-		 [0,1,0,1]]
-
-	# print(isStateAllowed(b, a))
+	
 
 	levelSolution = []
+	levelSolutionidx = 1
 	
 	temp_grid = np.zeros((dim0, dim1))
+	temp_grid = temp_grid.astype(int)
 
 	levelSolution.append(temp_grid)
 
 	# x or y, index, one possible configuration
+	curr_x_idx = 0     #X indices that we've seen
+	curr_y_idx = 0	   #Y indices that we've seen
 
+	x_idx = []
+	y_idx = []
+
+	dfs_stack = deque( [ (xDomains[0][1], xDomains[0][2], xDomains[0][3][0], levelSolutionidx) ] )
 	#how to add onto stack
-	for config in xDomain[index][3]:
-		dfs_stack.append((xDomains[index][1], xDomains[index][2], config))
+	for config in xDomains[0][3]:
+		dfs_stack.append((xDomains[0][1], xDomains[0][2], config, levelSolutionidx))
 
 	while dfs_stack:
 
-		axis, current_index, current_config = dfs_stack.pop()
-		print(dom)
-
-		if isNonogramAllowed():
+		axis, current_index, current_config, gar = dfs_stack.pop()
+		print("current tuple:", axis, current_index, current_config, levelSolutionidx)
+		if (1==0): #isNonogramAllowed(xDomains, yDomains, levelSolution[levelSolutionidx-1]) == True):
 			break
 
 		else:
-			# Add popped tuple onto the temp grid
-			new_temp_grid = levelSolution[prev_good_index] #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
-		
 			# check is state allowed
-			tempAllowed = isStateAllowed() #check if this added state is allowed 
-			
+			print("before isstate allowed, current config", current_config)
+			print("constraints", constraints)
+			if (axis == 'x'):
+				if(isSingleStateAllowed(xDomains[curr_x_idx][3], current_config) == True):
+					tempAllowed = isStateAllowed(yDomains, current_config) #ISSUE: comparing wrong. comparing an x and y column. will not fit
+			if (axis == 'y'):
+				if(isSingleStateAllowed(yDomains[curr_y_idx][3], current_config) == True):
+					tempAllowed = isStateAllowed(xDomains, current_config) #check if this added state is allowed 
 			# if allowed, add new configs at unseen opposite coordinate
-			if (tempAllowed):
+			if (tempAllowed == True):
+				print("temp is allowed")
+				# Add allowed tuple onto the temp grid
+				new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
+				new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
+				print("Solution Before appending: ",levelSolution)
+				print("\n \n TEMP GRID HERE \n \n ",new_temp_grid)
+				if (levelSolutionidx >= len(levelSolution)):
+					levelSolution.append(new_temp_grid)
+				else:
+					levelSolution[levelSolutionidx] = copy.deepcopy(new_temp_grid)
+					print("Solution Index: ", levelSolutionidx)
+				print(levelSolution)
+				#return levelSolution
 				#check whether currently on x or y axis
 				if (axis == 'x'): #xaxis
-					for config in yDomain[index][3]: #change index smart, find index that hasnt been searched yet (next best constrained index in Domain)
-						dfs_stack.append((yDomains[index][1], yDomains[index][2], config))
+					curr_y_idx += 1
+					levelSolutionidx += 1
+					#print("yDomains: ",yDomains)
+					print("curr_y_idx: ", curr_y_idx)
+					for config in yDomains[curr_y_idx][3]: 
+						dfs_stack.append((yDomains[curr_y_idx][1], yDomains[curr_y_idx][2], config, levelSolutionidx))
 				if (axis == 'y'): #yaxis
-					for config in xDomain[index][3]: #change index smart, find index that hasnt been searched yet (next best constrained index in Domain)
-						dfs_stack.append((xDomains[index][1], xDomains[index][2], config))
+					curr_x_idx += 1
+					levelSolutionidx += 1
+					for config in xDomains[curr_x_idx][3]: #change index smart, find index that hasnt been searched yet (next best constrained index in Domain)
+						dfs_stack.append((xDomains[curr_x_idx][1], xDomains[curr_x_idx][2], config, levelSolutionidx))
 
 			# else just set down the first configuration in the list of domains
 			else:
+				temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx = dfs_stack.pop()
+				print("Level Soln Index: ",levelSolutionidx)
+				print("Temp Level Index: ", temp_levelSolutionidx)
+				if (temp_axis != axis or temp_current_index != current_index):
+					if (temp_axis == 'x'):
+						curr_x_idx = temp_current_index
+						levelSolutionidx = temp_levelSolutionidx - 1
+					if (temp_axis == 'y'):
+						curr_y_idx = temp_current_index
+						levelSolutionidx = temp_levelSolutionidx - 1
+				dfs_stack.append((temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx))
 				
-
-		test = dom[0]
-
-
-	return np.random.randint(2, size=(dim0, dim1))
+	print(levelSolution)
+	return levelSolution[levelSolutionidx-1]
 
 	
 
@@ -188,14 +220,36 @@ def solve(constraints):
 # 				HELPER FUNCTIONS
 #############################################
 
+def addConfigToState(currentState, axis, current_index, configuration):
+	# currentState: the grid/nonogram
+	# configuration: what to add
+	print(axis, current_index)
+	if (axis == 'x'):
+		for j in range(currentState.shape[1]):
+			currentState[current_index][j] = currentState[current_index][j] | configuration[j]
+	if (axis == 'y'):
+		for i in range(currentState.shape[0]):
+			currentState[i][current_index] = currentState[i][current_index] | configuration[i]
+	return currentState
+
 def isStateAllowed(constraints, configuration):
 	#temp_grid: our full grid so far
 	#constraint: list of lists
 	#configuration: The configuration we are testing
+	#print(constraints)
+	for x in range(xDomains.shape[0]):
+		col = tempSolution[x].tolist()
+		if (isNonogramAllowedHelper(xDomains[x][3], col) == False):
+			return False
+	return True
 
+def isSingleStateAllowed(constraints, configuration):
+	#temp_grid: our full grid so far
+	#constraint: list of lists
+	#configuration: The configuration we are testing
 	for con in constraints:
-		inv_con = [1 if i == 0 else 0 for i in con]
-		temp = [i | j for i, j in zip(inv_con, configuration)]
+		inv_con = [1 if i == 0 else 0 for i in configuration]
+		temp = [i | j for i, j in zip(inv_con, con)]
 		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
 		if 0 not in temp:
 			#there is a configuration that works
@@ -203,44 +257,35 @@ def isStateAllowed(constraints, configuration):
 
 	return False
 
-def isNonogramAllowed(constraints, configuration):
+
+def isNonogramAllowedHelper(constraints, configuration):
 	#temp_grid: our full grid so far
 	#constraint: list of lists
 	#configuration: The configuration we are testing
-
-	isStateAllowed() #iterate a bunch of times for each coordinate
+	for con in constraints:
+		con = [0 if i == 0 else 1 for i in configuration]
+		temp = [i ^ j for i, j in zip(con, configuration)]
+		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
+		if 0 not in temp:
+			#there is a configuration that works
+			return True	
 
 	return False
 
-
-def dfs(maze):
-    # TODO: Write your code here
-    #get start position
-    start = maze.getStart()
-    obj = maze.getObjectives()
-
-    #stack 
-    #use append and pop to make it a stack
-    # (node, path)
-    q = deque([  (start, [start])  ])
-    v = set()
-
-    while q:
-        #while q is not empty
-        node, path = q.pop()
-        #check if the node is the goal state
-        if node in obj:
-            break
-        if node not in v:
-            v.add(node)
-            #get list of current nodes' neighbors
-            neighbors = maze.getNeighbors(node[0], node[1])
-            for n in neighbors:
-                #add node to the path 
-                temp = path + [n]
-                q.append( (n, temp) )
-
-    return path, len(v)
+def isNonogramAllowed(xDomains, yDomains, tempSolution):
+	#constraint: list of lists
+	#tempSolution: The configuration we are testing
+	print(constraints)
+	print(tempSolution)
+	for x in range(xDomains.shape[0]):
+		col = tempSolution[x].tolist()
+		if (isNonogramAllowedHelper(xDomains[x][3], col) == False):
+			return False
+	for y in range(yDomains.shape[1]):
+		if (isNonogramAllowedHelper(yDomains[y][3], tempSolution[:,y]) == False):
+			return False
+	
+	return True
 
 def getDomain(constraints, dimension):
 
