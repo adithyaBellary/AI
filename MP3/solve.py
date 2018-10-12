@@ -142,7 +142,7 @@ def solve(constraints):
 
 	# x or y, index, one possible configuration
 	curr_x_idx = 0     #X indices that we've seen
-	curr_y_idx = 0	   #Y indices that we've seen
+	curr_y_idx = -1	   #Y indices that we've seen
 
 	x_idx = []
 	y_idx = []
@@ -155,20 +155,20 @@ def solve(constraints):
 	while dfs_stack:
 
 		axis, current_index, current_config, gar = dfs_stack.pop()
-		print("current tuple:", axis, current_index, current_config, levelSolutionidx)
-		text = input("prompt:")
-		if (1==0): #isNonogramAllowed(xDomains, yDomains, levelSolution[levelSolutionidx-1]) == True):
+		#print("current tuple:", axis, current_index, current_config, levelSolutionidx)
+		#text = input("prompt:")
+		if (isNonogramAllowed(xDomains, yDomains, levelSolution[levelSolutionidx-1]) == True):
 			break
 
 		else:
 			# check is state allowed
-			print("before isstate allowed, current config", current_config)
+			#print("before isstate allowed, current config", current_config)
 			#print("constraints", constraints)
 			new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
 			new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
-			print("constraints: ", constraints)			
-			print(new_temp_grid)
-			text = input("prompt:")
+			#print("constraints: ", constraints)			
+			#print(new_temp_grid)
+			#text = input("prompt:")
 			if (axis == 'x'):
 				#if(isSingleStateAllowed(xDomains[curr_x_idx][3], current_config) == True):
 				tempAllowed = isStateAllowed(xDomains, yDomains, 'x', new_temp_grid) #ISSUE: comparing wrong. comparing an x and y column. will not fit
@@ -177,27 +177,27 @@ def solve(constraints):
 				tempAllowed = isStateAllowed(xDomains, yDomains, 'y', new_temp_grid) #check if this added state is allowed 
 			# if allowed, add new configs at unseen opposite coordinate
 			if (tempAllowed == True):
-				print("temp is allowed")
-				text = input("prompt:")
+				#print("temp is allowed")
+				#text = input("prompt:")
 				# Add allowed tuple onto the temp grid
 				# new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
 				# new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
-				print("Solution Before appending: ",levelSolution)
+				#print("Solution Before appending: ",levelSolution)
 				#print("\n \n TEMP GRID HERE \n \n ",new_temp_grid)
 				if (levelSolutionidx >= len(levelSolution)):
 					levelSolution.append(new_temp_grid)
 				else:
 					levelSolution[levelSolutionidx] = copy.deepcopy(new_temp_grid)
-					print("Solution Index: ", levelSolutionidx)
-				print("Solution after appending", levelSolution)
-				text = input("prompt:")
+					#print("Solution Index: ", levelSolutionidx)
+				#print("Solution after appending", levelSolution)
+				#text = input("prompt:")
 				#return levelSolution
 				#check whether currently on x or y axis
 				if (axis == 'x'): #xaxis
 					curr_y_idx += 1
 					levelSolutionidx += 1
 					#print("yDomains: ",yDomains)
-					print("curr_y_idx: ", curr_y_idx)
+					#print("curr_y_idx: ", curr_y_idx)
 					for config in yDomains[curr_y_idx][3]: 
 						dfs_stack.append((yDomains[curr_y_idx][1], yDomains[curr_y_idx][2], config, levelSolutionidx))
 				if (axis == 'y'): #yaxis
@@ -209,20 +209,24 @@ def solve(constraints):
 			# else just set down the first configuration in the list of domains
 			else:
 				temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx = dfs_stack.pop()
-				print("Level Soln Index: ",levelSolutionidx)
-				print("Temp Level Index: ", temp_levelSolutionidx)
+				#print("Level Soln Index: ",levelSolutionidx)
+				#print("Temp Level Index: ", temp_levelSolutionidx)
 				if (temp_axis != axis or temp_current_index != current_index):
 					if (temp_axis == 'x'):
-						curr_x_idx = temp_current_index
-						levelSolutionidx = temp_levelSolutionidx
+						curr_x_idx = copy.copy(temp_current_index)
+						curr_y_idx = copy.copy(temp_current_index) - 1
+						levelSolutionidx = copy.copy(temp_levelSolutionidx)
 					if (temp_axis == 'y'):
-						curr_y_idx = temp_current_index
-						levelSolutionidx = temp_levelSolutionidx
+						curr_x_idx = copy.copy(temp_current_index)
+						curr_y_idx = copy.copy(temp_current_index)
+						levelSolutionidx = copy.copy(temp_levelSolutionidx)
 				dfs_stack.append((temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx))
-	print("constraints: ", constraints)			
-	print("level solution:", levelSolution)
+	print("levelSolutionidx: ", levelSolutionidx)			
+	#print("solution, length of levelSolution:", levelSolution[levelSolutionidx-1], len(levelSolution))
 	print("current indexes: ", curr_x_idx, curr_y_idx)
-	return levelSolution[levelSolutionidx-1]
+	solutionFound = np.array(levelSolution[levelSolutionidx-1])
+	print(solutionFound.T)
+	return solutionFound.T
 
 	
 
@@ -233,7 +237,7 @@ def solve(constraints):
 def addConfigToState(currentState, axis, current_index, configuration):
 	# currentState: the grid/nonogram
 	# configuration: what to add
-	print(axis, current_index)
+	#print(axis, current_index)
 	if (axis == 'y'):
 		for j in range(currentState.shape[1]):
 			currentState[current_index][j] = currentState[current_index][j] | configuration[j]
@@ -272,28 +276,14 @@ def isStateAllowedHelper(constraints, configuration):
 
 	return False
 
-def isSingleStateAllowed(constraints, configuration):
-	#temp_grid: our full grid so far
-	#constraint: list of lists
-	#configuration: The configuration we are testing
-	for con in constraints:
-		inv_con = [1 if i == 0 else 0 for i in configuration]
-		temp = [i | j for i, j in zip(inv_con, con)]
-		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
-		if 0 not in temp:
-			#there is a configuration that works
-			return True	
-
-	return False
-
-
 def isNonogramAllowedHelper(constraints, configuration):
 	#temp_grid: our full grid so far
 	#constraint: list of lists
 	#configuration: The configuration we are testing
 	for con in constraints:
-		con = [0 if i == 0 else 1 for i in configuration]
-		temp = [i ^ j for i, j in zip(con, constraints)]
+		temp = [1 if (configuration[i]==con[i]) else 0 for i in range(len(configuration))]
+		#temp = [i ^ j for i, j in zip(fig1, con)]
+		#print("temp sol in nonogram allowed?", temp)
 		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
 		if 0 not in temp:
 			#there is a configuration that works
@@ -305,13 +295,13 @@ def isNonogramAllowed(xDomains, yDomains, tempSolution):
 	#constraint: list of lists
 	#tempSolution: The configuration we are testing
 	#print(constraints)
-	print(tempSolution)
-	for x in range(xDomains.shape[0]):
-		col = tempSolution[x].tolist()
-		if (isNonogramAllowedHelper(xDomains[x][3], col) == False):
+	#print(tempSolution)
+	for i in range(len(yDomains)):
+		col = tempSolution[i].tolist()
+		if (isNonogramAllowedHelper(yDomains[i][3], col) == False):
 			return False
-	for y in range(yDomains.shape[1]):
-		if (isNonogramAllowedHelper(yDomains[y][3], tempSolution[:,y]) == False):
+	for j in range(len(xDomains)):
+		if (isNonogramAllowedHelper(xDomains[j][3], tempSolution[:,j]) == False):
 			return False
 	
 	return True
