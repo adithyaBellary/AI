@@ -85,12 +85,12 @@ def solve(constraints):
 
 	dim0 = len(constraints[0])
 	dim1 = len(constraints[1])
-
+	print("dim0,dim1: ", dim0, ", ", dim1)
 	rowList = constraints[0]
 	colList = constraints[1]
 
-	xDomains = [[]]*dim1
-	yDomains = [[]]*dim0
+	xDomains = [[]]*dim0
+	yDomains = [[]]*dim1
 
 	# for x in range(dim0):
 	# 	domain = getDomain(rowList[x], dim1)
@@ -114,93 +114,107 @@ def solve(constraints):
 
 	levelSolution.append(temp_grid)
 
-	curr_x_idx = 0     #Current col we're checking
-	curr_y_idx = -1	   #Current row we're checking
+	#curr_x_idx = 0     #Current col we're checking
+	#curr_y_idx = -1	   #Current row we're checking
 
 	#Tuple (Axis, index of row/col, level index)
-	rowcol_seen = deque([])
+	seenStack = deque([])
+	exploredStack = deque([])
 
 	#Domains = (list of configurations, axis, index of row/col)
-	if(xWeights[len(xWeights)-1][0] <= yWeights[len(yWeights)-1][0]):
-		domain = getDomain(constraints[0][yWeights[len(yWeights)-1][1]], dim1)
-		yDomains[yWeights[len(yWeights)-1][1]] = ((domain, 'y'))
-		rowcol_seen.append(('y', yWeights[len(yWeights)-1][1], levelSolutionidx))
+	#seenStack = (axis, index)
+	if(xWeights[-1][0] <= yWeights[-1][0]):
+		domain = getDomain(constraints[0][yWeights[-1][1]], dim0)
+		yDomains[yWeights[-1][1]] = domain
+		seenStack.append(('y', yWeights[-1][1]))
+		
 	else:
-		domain = getDomain(constraints[1][xWeights[len(xWeights)-1][1]], dim0)
-		xDomains[xWeights[len(xWeights)-1][1]] = ((domain, 'x'))
-		rowcol_seen.append(('x', xWeights[len(xWeights)-1][1], levelSolutionidx))
+		domain = getDomain(constraints[1][xWeights[-1][1]], dim1)
+		xDomains[xWeights[-1][1]] = domain
+		seenStack.append(('x', xWeights[-1][1]))
+		#exploredStack.append(('x', xWeights[-1][1], levelSolutionidx))
 
-	
-	while rowcol_seen:
+	xTempDomains = copy.deepcopy(xDomains)
+	yTempDomains = copy.deepcopy(yDomains)
 
-		if (isValidSolution(xDomains, yDomains, levelSolution[levelSolutionidx-1]) == True):	#CHANGE HELPER FUNCTION
+	backtrack = False
+
+	while seenStack:
+
+		if (isValidSolution(constraints, levelSolution[-1]) == True):	#CHANGE HELPER FUNCTION
 			break
 
 		else:
-			axis, rowcol_index, level_index = rowcol_seen.pop()
-			if(rowcol_index not in rowcol_seen)
-				if(axis == 'x'):
-					domain = getDomain(constraints[0][rowcol_index], dim1)
-				elif(axis == 'y'):
-					domain = getDomain(constraints[1][rowcol_index], dim0)
-				rowcol_seen.append((axis, rowcol_index))
-
-			new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
-			new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
-
-			#Pick first configuration
-			#For each cell in config, add all indices of opposite axis onto queue proper axis queue
-				#Remove first, use as new start
-			#Continue loop
-
-			for i in current_config:
-				if(i != 0):
-					if(axis == 'x'):
-						x_seen.append(i)
-					if(axis == 'y'):
-						y_seen.append(i)
-
-
-			if (axis == 'x'):
-				tempAllowed = isConfigAllowed(xDomains, yDomains, 'x', new_temp_grid, current_index)
-			if (axis == 'y'):
-				tempAllowed = isConfigAllowed(xDomains, yDomains, 'y', new_temp_grid, current_index) 
-			if (tempAllowed == True):
-				if (levelSolutionidx >= len(levelSolution)):
-					levelSolution.append(new_temp_grid)
+			axis, rowcol_index = seenStack.pop()
+			rowcol_index = int(rowcol_index)
+			if((axis, rowcol_index) in exploredStack):
+				#in explored stack, need to check if valid, if not bt
+				if (isConfigAllowed(xDomains, yDomains, axis, levelSolution[-1], rowcol_index) == True):
+					pass
 				else:
-					levelSolution[levelSolutionidx] = copy.deepcopy(new_temp_grid)
-				if (axis == 'x'): #xaxis
-					curr_y_idx += 1
-					levelSolutionidx += 1
-					for config in yDomains[curr_y_idx][3]: 
-						dfs_stack.append((yDomains[curr_y_idx][1], yDomains[curr_y_idx][2], config, levelSolutionidx))
-				if (axis == 'y'): #yaxis
-					curr_x_idx += 1
-					levelSolutionidx += 1
-					for config in xDomains[curr_x_idx][3]: 
-						dfs_stack.append((xDomains[curr_x_idx][1], xDomains[curr_x_idx][2], config, levelSolutionidx))
+					backtrack = True
 
-			# else just set down the first configuration in the list of domains
-			else:
-				temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx = dfs_stack.pop()
-				if (temp_axis != axis or temp_current_index != current_index):
-					if (temp_axis == 'x'):
-						curr_x_idx = copy.copy(temp_current_index)
-						curr_y_idx = copy.copy(temp_current_index) - 1
-						levelSolutionidx = copy.copy(temp_levelSolutionidx)
-					if (temp_axis == 'y'):
-						curr_x_idx = copy.copy(temp_current_index)
-						curr_y_idx = copy.copy(temp_current_index)
-						levelSolutionidx = copy.copy(temp_levelSolutionidx)
-				dfs_stack.append((temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx))
+			else: 
+				exploredStack.append((axis, rowcol_index))
+				if((axis == 'x') and (xDomains[rowcol_index] == [])):
+					xDomains[rowcol_index] = getDomain(constraints[0][rowcol_index], dim0)
+					xTempDomains[rowcol_index] = getDomain(constraints[0][rowcol_index], dim0)
+				elif((axis == 'y') and (yDomains[rowcol_index] == [])):
+					yDomains[rowcol_index] = getDomain(constraints[1][rowcol_index], dim1)
+					yTempDomains[rowcol_index] = getDomain(constraints[1][rowcol_index], dim1)
+				#seenStack.append((axis, rowcol_index))
+				configAllowed = False
+				while (not configAllowed and not backtrack):
+					if (axis == 'x'):
+						if (len(xTempDomains[rowcol_index]) == 0):
+							backtrack = True
+						currentConfig = xTempDomains[rowcol_index][-1]
+						xTempDomains.pop()
+					if (axis == 'y'):
+						print("rowcol_index", rowcol_index)
+						if (len(yTempDomains[rowcol_index]) == 0):
+							backtrack = True
+						currentConfig = yTempDomains[rowcol_index][-1]
+						yTempDomains.pop()
+					#check if allowed:
+					new_temp_grid = copy.deepcopy(levelSolution[-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
+					new_temp_grid = addConfigToState(new_temp_grid, axis, rowcol_index, currentConfig)
+					configAllowed = isConfigAllowed(xDomains, yDomains, axis, new_temp_grid, rowcol_index)
+
+				if (configAllowed): #if allowed
+					if (axis == 'x'):
+						tempList = np.zeros((dim0, 2))	
+					if (axis == 'y'):						
+						tempList = np.zeros((dim1, 2))
+					levelSolution.append(new_temp_grid)
+					for seen in range(len(currentConfig)):
+						if (axis == 'x'):
+							if currentConfig[seen] != 0:
+								tempList[seen] = (copy.deepcopy(yWeights[seen]))
+						if (axis == 'y'):
+							if currentConfig[seen] != 0:
+								tempList[seen] = (copy.deepcopy(xWeights[seen]))
+					tempList = tempList[np.argsort(tempList[:,0])]
+					for k in tempList: # put touched indices onto stack
+						if (axis == 'x'):
+							seenStack.append(('y', k[1]))
+						if (axis == 'y'):
+							seenStack.append(('x', k[1]))
+
+			if (backtrack):
+				#go to the last valid level solution
+				if (axis == 'y'):
+					yTempDomains[rowcol_index] = copy.deepcopy(yDomains[rowcol_index])
+				if (axis == 'x'):
+					xTempDomains[rowcol_index] = copy.deepcopy(xDomains[rowcol_index])
+				seenStack.append(exploredStack.pop())
+				levelSolution.pop()
+
 	print("levelSolutionidx: ", levelSolutionidx)
 	print("current indexes: ", curr_x_idx, curr_y_idx)
 	solutionFound = np.array(levelSolution[levelSolutionidx-1])
 	print(solutionFound)
 	return solutionFound
-
-	
 
 #############################################
 # 				HELPER FUNCTIONS
@@ -245,28 +259,28 @@ def addConfigToState(currentState, axis, current_index, configuration):
 	return currentState
 
 def isValidSolution(constraints, solution):
-    """Returns True if solution fits constraints, False otherwise"""
-    solution = np.array(solution)
-    dim0 = len(self.constraints[0])
-    dim1 = len(self.constraints[1])
-    if solution.shape != (dim0, dim1):
-        return False
-    for i in range(dim0):
-        constraints = self.constraints[0][i]
-        rowcol = []
-        for j in range(dim1):
-            rowcol.append(solution[i][j])
-        if not (runs(rowcol) == constraints):
-            return False
+	solution = np.array(solution)
+	dim0 = len(constraints[0])
+	dim1 = len(constraints[1])
+	if (solution.shape != (dim0, dim1)):
+		print("Wrong dimensions, try flipping")
+		return False
+	for i in range(dim0):
+		rowconstraints = constraints[0][i]
+		rowcol = []
+		for j in range(dim1):
+			rowcol.append(solution[i][j])
+		if not (runs(rowcol) == rowconstraints):
+			return False
         
-    for j in range(dim1):
-        constraints = self.constraints[1][j]
-        rowcol = []
-        for i in range(dim0):
-            rowcol.append(solution[i][j])
-        if not (runs(rowcol) == constraints):
-            return False
-    return True
+	for j in range(dim1):
+		colconstraints = constraints[1][j]
+		rowcol = []
+		for i in range(dim0):
+			rowcol.append(solution[i][j])
+		if not (runs(rowcol) == colconstraints):
+			return False
+	return True
     
 def runs(rowcol):
 	"""
@@ -286,36 +300,25 @@ def runs(rowcol):
 	        curr_run[0] += 1
 	return run
 
-# def isStateAllowed(xDomains, yDomains, axis, tempSolution, current_index):
-# 	#temp_grid: our full grid so far
-# 	#constraint: list of lists
-# 	#configuration: The configuration we are testing
-# 	#print(constraints)
-# 	#if (axis == 'x'):
-# 	for i in range(len(xDomains)):
-# 		col = tempSolution[i].tolist()
-# 		if (isStateAllowedHelper(xDomains[i][3], col) == False):
-# 			return False
-# 	#if (axis == 'y'):
-# 	for j in range(len(yDomains)):
-# 		if (isStateAllowedHelper(yDomains[j][3], tempSolution[:,j]) == False):
-# 			return False
-# 	return True
+def isConfigAllowed(xDomains, yDomains, axis, tempSolution, current_index):
+	if (axis == 'x'):
+		col = tempSolution[current_index].tolist()
+		if (isStateAllowedHelper(xDomains[current_index], col) == False):
+			return False
+	if (axis == 'y'):
+		print("current_index", current_index)
+		print("size yDomains", len(yDomains))
+		print("size tempSolution", len(tempSolution[0]))
+		if (isStateAllowedHelper(yDomains[current_index], tempSolution[:,current_index]) == False):
+			return False
+	return True
 
 def isStateAllowedHelper(constraints, configuration):
-	#temp_grid: our full grid so far
-	#constraint: list of lists
-	#configuration: The configuration we are testing
 	for con in constraints:
 		inv_con = [1 if i == 0 else 0 for i in configuration]
 		temp = [i | j for i, j in zip(inv_con, con)]
-		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
-		#print("constraint:", con)
 		if 0 not in temp:
-			#print("True temp state:", temp)
-			#there is a configuration that works
 			return True	
-	#print("False temp state:", temp)
 	return False
 
 # def isNonogramAllowedHelper(constraints, configuration):
