@@ -89,8 +89,8 @@ def solve(constraints):
 	rowList = constraints[0]
 	colList = constraints[1]
 
-	xDomains = []
-	yDomains = []
+	xDomains = [[]]*dim1
+	yDomains = [[]]*dim0
 
 	# for x in range(dim0):
 	# 	domain = getDomain(rowList[x], dim1)
@@ -105,16 +105,7 @@ def solve(constraints):
 	#Sorted weights for each row and column
 	#Order (weight, index)
 	xWeights, yWeights = calcWeights(constraints)
-	
 
-	#Domains = (list of configurations, axis, index of row/col)
-	if(xWeights[len(xWeights)-1][0] <= yWeights[len(yWeights)-1][0]):
-		domain = getDomain(constraints[0][int(yWeights[len(yWeights)-1][1])], dim1)
-		yDomains.append((domain, 'y', int(yWeights[len(yWeights)-1][1])))
-	else:
-		domain = getDomain(constraints[0][int(xWeights[len(xWeights)-1][1])], dim0)
-		xDomains.append((domain, 'x', int(xWeights[len(xWeights)-1][1])))
-	
 	levelSolution = []
 	levelSolutionidx = 1
 	
@@ -126,23 +117,34 @@ def solve(constraints):
 	curr_x_idx = 0     #Current col we're checking
 	curr_y_idx = -1	   #Current row we're checking
 
-	x_seen = deque([(curr_x_idx)])
-	y_seen = deque([(curr_y_idx)])
+	#Tuple (Axis, index of row/col, level index)
+	rowcol_seen = deque([])
 
-	#Tuple (One possible config, axis, index of row/col, level index)
-	dfs_stack = deque( [ (xDomains[0][0][0], xDomains[0][1], xDomains[0][2], levelSolutionidx) ] )
+	#Domains = (list of configurations, axis, index of row/col)
+	if(xWeights[len(xWeights)-1][0] <= yWeights[len(yWeights)-1][0]):
+		domain = getDomain(constraints[0][yWeights[len(yWeights)-1][1]], dim1)
+		yDomains[yWeights[len(yWeights)-1][1]] = ((domain, 'y'))
+		rowcol_seen.append(('y', yWeights[len(yWeights)-1][1], levelSolutionidx))
+	else:
+		domain = getDomain(constraints[1][xWeights[len(xWeights)-1][1]], dim0)
+		xDomains[xWeights[len(xWeights)-1][1]] = ((domain, 'x'))
+		rowcol_seen.append(('x', xWeights[len(xWeights)-1][1], levelSolutionidx))
 
-	for config in xDomains[0][0]:
-		dfs_stack.append((config, xDomains[0][1], xDomains[0][2], levelSolutionidx))
+	
+	while rowcol_seen:
 
-	while dfs_stack:
-
-		current_config, axis, current_index, level_index = dfs_stack.pop()
-		
 		if (isValidSolution(xDomains, yDomains, levelSolution[levelSolutionidx-1]) == True):	#CHANGE HELPER FUNCTION
 			break
 
 		else:
+			axis, rowcol_index, level_index = rowcol_seen.pop()
+			if(rowcol_index not in rowcol_seen)
+				if(axis == 'x'):
+					domain = getDomain(constraints[0][rowcol_index], dim1)
+				elif(axis == 'y'):
+					domain = getDomain(constraints[1][rowcol_index], dim0)
+				rowcol_seen.append((axis, rowcol_index))
+
 			new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
 			new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
 
@@ -205,8 +207,8 @@ def solve(constraints):
 #############################################
 
 def calcWeights(constraints):
-	xWeights = np.zeros((len(constraints[0]),2))
-	yWeights = np.zeros((len(constraints[1]),2))
+	xWeights = np.zeros((len(constraints[0]),2), dtype='int32')
+	yWeights = np.zeros((len(constraints[1]),2), dtype='int32')
 	for i in range(len(constraints[0])):
 		for k in range(len(constraints[0][i])):
 			xWeights[i][0] += constraints[0][i][k][0]
