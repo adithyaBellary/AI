@@ -148,69 +148,42 @@ def solve(constraints):
 	y_idx = []
 
 	dfs_stack = deque( [ (xDomains[0][1], xDomains[0][2], xDomains[0][3][0], levelSolutionidx) ] )
-	#how to add onto stack
 	for config in xDomains[0][3]:
 		dfs_stack.append((xDomains[0][1], xDomains[0][2], config, levelSolutionidx))
 
 	while dfs_stack:
 
 		axis, current_index, current_config, gar = dfs_stack.pop()
-		#print("current tuple:", axis, current_index, current_config, levelSolutionidx)
 		#text = input("prompt:")
 		if (isNonogramAllowed(xDomains, yDomains, levelSolution[levelSolutionidx-1]) == True):
 			break
 
 		else:
-			# check is state allowed
-			#print("before isstate allowed, current config", current_config)
-			#print("constraints", constraints)
 			new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
 			new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
-			#print("constraints: ", constraints)			
-			#print(new_temp_grid)
-			#text = input("prompt:")
 			if (axis == 'x'):
-				#if(isSingleStateAllowed(xDomains[curr_x_idx][3], current_config) == True):
 				tempAllowed = isStateAllowed(xDomains, yDomains, 'x', new_temp_grid) #ISSUE: comparing wrong. comparing an x and y column. will not fit
 			if (axis == 'y'):
-				#if(isSingleStateAllowed(yDomains[curr_y_idx][3], current_config) == True):
-				tempAllowed = isStateAllowed(xDomains, yDomains, 'y', new_temp_grid) #check if this added state is allowed 
-			# if allowed, add new configs at unseen opposite coordinate
+				tempAllowed = isStateAllowed(xDomains, yDomains, 'y', new_temp_grid) 
 			if (tempAllowed == True):
-				#print("temp is allowed")
-				#text = input("prompt:")
-				# Add allowed tuple onto the temp grid
-				# new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
-				# new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
-				#print("Solution Before appending: ",levelSolution)
-				#print("\n \n TEMP GRID HERE \n \n ",new_temp_grid)
 				if (levelSolutionidx >= len(levelSolution)):
 					levelSolution.append(new_temp_grid)
 				else:
 					levelSolution[levelSolutionidx] = copy.deepcopy(new_temp_grid)
-					#print("Solution Index: ", levelSolutionidx)
-				#print("Solution after appending", levelSolution)
-				#text = input("prompt:")
-				#return levelSolution
-				#check whether currently on x or y axis
 				if (axis == 'x'): #xaxis
 					curr_y_idx += 1
 					levelSolutionidx += 1
-					#print("yDomains: ",yDomains)
-					#print("curr_y_idx: ", curr_y_idx)
 					for config in yDomains[curr_y_idx][3]: 
 						dfs_stack.append((yDomains[curr_y_idx][1], yDomains[curr_y_idx][2], config, levelSolutionidx))
 				if (axis == 'y'): #yaxis
 					curr_x_idx += 1
 					levelSolutionidx += 1
-					for config in xDomains[curr_x_idx][3]: #change index smart, find index that hasnt been searched yet (next best constrained index in Domain)
+					for config in xDomains[curr_x_idx][3]: 
 						dfs_stack.append((xDomains[curr_x_idx][1], xDomains[curr_x_idx][2], config, levelSolutionidx))
 
 			# else just set down the first configuration in the list of domains
 			else:
 				temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx = dfs_stack.pop()
-				#print("Level Soln Index: ",levelSolutionidx)
-				#print("Temp Level Index: ", temp_levelSolutionidx)
 				if (temp_axis != axis or temp_current_index != current_index):
 					if (temp_axis == 'x'):
 						curr_x_idx = copy.copy(temp_current_index)
@@ -221,8 +194,7 @@ def solve(constraints):
 						curr_y_idx = copy.copy(temp_current_index)
 						levelSolutionidx = copy.copy(temp_levelSolutionidx)
 				dfs_stack.append((temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx))
-	print("levelSolutionidx: ", levelSolutionidx)			
-	#print("solution, length of levelSolution:", levelSolution[levelSolutionidx-1], len(levelSolution))
+	print("levelSolutionidx: ", levelSolutionidx)
 	print("current indexes: ", curr_x_idx, curr_y_idx)
 	solutionFound = np.array(levelSolution[levelSolutionidx-1])
 	print(solutionFound.T)
