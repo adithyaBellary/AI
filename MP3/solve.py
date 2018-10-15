@@ -85,13 +85,13 @@ def solve(constraints):
 
 	dim0 = len(constraints[0])
 	dim1 = len(constraints[1])
-	print("dim0,dim1: ", dim0, ", ", dim1)
+	
 	rowList = constraints[0]
 	colList = constraints[1]
 
 	xDomains = [[]]*dim0
 	yDomains = [[]]*dim1
-
+	print(dim0, dim1)
 	# for x in range(dim0):
 	# 	domain = getDomain(rowList[x], dim1)
 	# 	#heapq.heappush(xDomains, (len(domain),'x', x, domain))
@@ -111,7 +111,7 @@ def solve(constraints):
 	
 	temp_grid = np.zeros((dim0, dim1))
 	temp_grid = temp_grid.astype(int)
-
+	#print("temp_grid", temp_grid)
 	levelSolution.append(temp_grid)
 
 	#curr_x_idx = 0     #Current col we're checking
@@ -124,12 +124,12 @@ def solve(constraints):
 	#Domains = (list of configurations, axis, index of row/col)
 	#seenStack = (axis, index)
 	if(xWeights[-1][0] <= yWeights[-1][0]):
-		domain = getDomain(constraints[0][yWeights[-1][1]], dim0)
+		domain = getDomain(constraints[1][yWeights[-1][1]], dim1)
 		yDomains[yWeights[-1][1]] = domain
 		seenStack.append(('y', yWeights[-1][1]))
 		
 	else:
-		domain = getDomain(constraints[1][xWeights[-1][1]], dim1)
+		domain = getDomain(constraints[0][xWeights[-1][1]], dim0)
 		xDomains[xWeights[-1][1]] = domain
 		seenStack.append(('x', xWeights[-1][1]))
 		#exploredStack.append(('x', xWeights[-1][1], levelSolutionidx))
@@ -140,53 +140,80 @@ def solve(constraints):
 	backtrack = False
 
 	while seenStack:
-
 		if (isValidSolution(constraints, levelSolution[-1]) == True):	#CHANGE HELPER FUNCTION
+			print("found solution")
 			break
 
 		else:
+			backtrack = False
+			configAllowed = False
 			axis, rowcol_index = seenStack.pop()
 			rowcol_index = int(rowcol_index)
-			if((axis, rowcol_index) in exploredStack):
-				#in explored stack, need to check if valid, if not bt
-				if (isConfigAllowed(xDomains, yDomains, axis, levelSolution[-1], rowcol_index) == True):
-					pass
-				else:
+			while ((axis, rowcol_index) in exploredStack):
+				if (isConfigAllowed(xDomains, yDomains, axis, levelSolution[-1], rowcol_index) != True):
 					backtrack = True
+					break
+				axis, rowcol_index = seenStack.pop()
+			# if((axis, rowcol_index) in exploredStack):
+			# 	#in explored stack, need to check if valid, if not bt
+			# 	if (isConfigAllowed(xDomains, yDomains, axis, levelSolution[-1], rowcol_index) == True):
+			# 		configAllowed = True
+			# 	else:
+			# 		backtrack = True
 
-			else: 
-				exploredStack.append((axis, rowcol_index))
+			if (True): 
+				#exploredStack.append((axis, rowcol_index))
+				# print("ROWCOL INDEX", rowcol_index)
 				if((axis == 'x') and (xDomains[rowcol_index] == [])):
 					xDomains[rowcol_index] = getDomain(constraints[0][rowcol_index], dim0)
 					xTempDomains[rowcol_index] = getDomain(constraints[0][rowcol_index], dim0)
 				elif((axis == 'y') and (yDomains[rowcol_index] == [])):
 					yDomains[rowcol_index] = getDomain(constraints[1][rowcol_index], dim1)
 					yTempDomains[rowcol_index] = getDomain(constraints[1][rowcol_index], dim1)
-				#seenStack.append((axis, rowcol_index))
-				configAllowed = False
+				#configAllowed = False
+				#backtrack = False
 				while (not configAllowed and not backtrack):
+					# print("Rowcol index", rowcol_index)
+					# print("Length of xTempDomains, yTempDomains", len(xTempDomains), len(yTempDomains))
+
+					# print("yTempDomains", yTempDomains)
+					
 					if (axis == 'x'):
+						# print("xTempDomains", xTempDomains[rowcol_index])
 						if (len(xTempDomains[rowcol_index]) == 0):
+							#xTempDomains[rowcol_index] = copy.deepcopy(xDomains[rowcol_index])
 							backtrack = True
-						currentConfig = xTempDomains[rowcol_index][-1]
-						xTempDomains.pop()
+						else:
+							currentConfig = xTempDomains[rowcol_index][-1]
+							xTempDomains[rowcol_index].pop()
 					if (axis == 'y'):
-						print("rowcol_index", rowcol_index)
+						# print("yTempDomains", yTempDomains[rowcol_index])
 						if (len(yTempDomains[rowcol_index]) == 0):
+							#yTempDomains[rowcol_index] = copy.deepcopy(yDomains[rowcol_index])
 							backtrack = True
-						currentConfig = yTempDomains[rowcol_index][-1]
-						yTempDomains.pop()
+						else:
+							currentConfig = yTempDomains[rowcol_index][-1]
+							yTempDomains[rowcol_index].pop()
 					#check if allowed:
 					new_temp_grid = copy.deepcopy(levelSolution[-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
 					new_temp_grid = addConfigToState(new_temp_grid, axis, rowcol_index, currentConfig)
+					# print("Temp_grid", new_temp_grid)
 					configAllowed = isConfigAllowed(xDomains, yDomains, axis, new_temp_grid, rowcol_index)
-
+					# print("Config allowed", configAllowed)
+				levelSolution.append(new_temp_grid)
 				if (configAllowed): #if allowed
+					print("axis, index: ", axis, ", ", rowcol_index)
+					print("Config allowed. currentConfig: ")
+					print(currentConfig)
+					print("current solution: ")
+					print(new_temp_grid)
 					if (axis == 'x'):
-						tempList = np.zeros((dim0, 2))	
+						tempList = np.zeros((dim0, 2), dtype = 'int32')	
 					if (axis == 'y'):						
-						tempList = np.zeros((dim1, 2))
-					levelSolution.append(new_temp_grid)
+						tempList = np.zeros((dim1, 2), dtype = 'int32')
+					#levelSolution.append(new_temp_grid)
+					exploredStack.append((axis, rowcol_index))
+					#print("Level Solution:", levelSolution[-1])
 					for seen in range(len(currentConfig)):
 						if (axis == 'x'):
 							if currentConfig[seen] != 0:
@@ -194,25 +221,37 @@ def solve(constraints):
 						if (axis == 'y'):
 							if currentConfig[seen] != 0:
 								tempList[seen] = (copy.deepcopy(xWeights[seen]))
+					print("before order temp list: ", tempList)
 					tempList = tempList[np.argsort(tempList[:,0])]
+					print("after order Temp list: ", tempList)
 					for k in tempList: # put touched indices onto stack
-						if (axis == 'x'):
+						if ((axis == 'x') and (k[1] != 0)):
+							print("adding to seenStack: (y,", k[1],")")
 							seenStack.append(('y', k[1]))
-						if (axis == 'y'):
+						if ((axis == 'y') and (k[1] != 0)):
+							print("adding to seenStack: (x,", k[1],")")
 							seenStack.append(('x', k[1]))
-
 			if (backtrack):
+				print(exploredStack)
+				print(seenStack)
 				#go to the last valid level solution
-				if (axis == 'y'):
+				# print("Backtrack:",backtrack)
+				if ((axis == 'y') and ((seenStack[-1][0] != axis) or (seenStack[-1][1] != rowcol_index))):
 					yTempDomains[rowcol_index] = copy.deepcopy(yDomains[rowcol_index])
-				if (axis == 'x'):
+					print(exploredStack[-1])
+					seenStack.append(exploredStack.pop())
+					print(seenStack[-1])
+					levelSolution.pop()
+				elif ((axis == 'x') and (((seenStack[-1])[0] != axis) and ((seenStack[-1])[1] != rowcol_index))):
 					xTempDomains[rowcol_index] = copy.deepcopy(xDomains[rowcol_index])
-				seenStack.append(exploredStack.pop())
-				levelSolution.pop()
+					seenStack.append(exploredStack.pop())
+					levelSolution.pop()
+				backtrack = False
+			#print(seenStack)
+			#print(exploredStack)
 
-	print("levelSolutionidx: ", levelSolutionidx)
-	print("current indexes: ", curr_x_idx, curr_y_idx)
-	solutionFound = np.array(levelSolution[levelSolutionidx-1])
+	solutionFound = np.array(levelSolution[-1])
+	#view(solutionFound)
 	print(solutionFound)
 	return solutionFound
 
@@ -250,11 +289,14 @@ def addConfigToState(currentState, axis, current_index, configuration):
 	# currentState: the grid/nonogram
 	# configuration: what to add
 	#print(axis, current_index)
+	# print("Current:", current_index)
+	# print("currentState.shape[0]", currentState.shape[0])
+	# print("currentState.shape[1]", currentState.shape[1])
 	if (axis == 'y'):
-		for j in range(currentState.shape[1]):
+		for j in range(currentState.shape[0]):
 			currentState[j][current_index] = currentState[j][current_index] | configuration[j]
 	if (axis == 'x'):
-		for i in range(currentState.shape[0]):
+		for i in range(currentState.shape[1]):
 			currentState[current_index][i] = currentState[current_index][i] | configuration[i]
 	return currentState
 
@@ -306,9 +348,9 @@ def isConfigAllowed(xDomains, yDomains, axis, tempSolution, current_index):
 		if (isStateAllowedHelper(xDomains[current_index], col) == False):
 			return False
 	if (axis == 'y'):
-		print("current_index", current_index)
-		print("size yDomains", len(yDomains))
-		print("size tempSolution", len(tempSolution[0]))
+		# print("current_index", current_index)
+		# print("size yDomains", len(yDomains))
+		# print("size tempSolution", len(tempSolution[0]))
 		if (isStateAllowedHelper(yDomains[current_index], tempSolution[:,current_index]) == False):
 			return False
 	return True
@@ -405,3 +447,31 @@ def isValid(posConfig):
         if (posConfig[i] == posConfig[i+1]) and (posConfig[i] != 0):
             return False
     return True
+
+def view(solution):
+    height = solution.shape[0]
+    width = solution.shape[1]
+    block_size = 20
+    offset = 32
+    
+    display = pygame.display.set_mode(
+        (
+            width * block_size + 2 * offset,
+            height * block_size + 2 * offset, 
+            
+        ), 0, 0)
+    
+    max_color = float(max(1, np.max(solution)))
+    for row in range(len(solution)):
+        for col in range(len(solution[0])):
+            shade = 255 - (solution[row,col]/max_color)*255
+            color = (shade, shade, shade)
+            rect = pygame.Rect(offset + col * block_size, 
+                               offset + row * block_size, 
+                               block_size, 
+                               block_size
+                    )
+            pygame.draw.rect(display, color, rect)
+    pygame.display.update()
+    
+    time.sleep(25)
