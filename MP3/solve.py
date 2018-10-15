@@ -89,8 +89,8 @@ def solve(constraints):
 	rowList = constraints[0]
 	colList = constraints[1]
 
-	xDomains = [[]]*dim0
-	yDomains = [[]]*dim1
+	xDomains = [[] for i in range(dim0)]
+	yDomains = [[] for i in range(dim1)]
 	print(dim0, dim1)
 	# for x in range(dim0):
 	# 	domain = getDomain(rowList[x], dim1)
@@ -104,7 +104,10 @@ def solve(constraints):
 
 	#Sorted weights for each row and column
 	#Order (weight, index)
-	xWeights, yWeights = calcWeights(constraints)
+	xWeightsUnsorted, yWeightsUnsorted = calcWeights(constraints)
+
+	xWeights = xWeightsUnsorted[np.argsort(xWeightsUnsorted[:,0])]
+	yWeights = yWeightsUnsorted[np.argsort(yWeightsUnsorted[:,0])]
 
 	levelSolution = []
 	levelSolutionidx = 1
@@ -138,6 +141,9 @@ def solve(constraints):
 	yTempDomains = copy.deepcopy(yDomains)
 
 	backtrack = False
+	wait_num = deque([])
+	justPop = False		
+	# count=0
 
 	while seenStack:
 		if (isValidSolution(constraints, levelSolution[-1]) == True):	#CHANGE HELPER FUNCTION
@@ -148,12 +154,18 @@ def solve(constraints):
 			backtrack = False
 			configAllowed = False
 			axis, rowcol_index = seenStack.pop()
+			print("current pop, not in solution index:",axis, rowcol_index)
+			print(levelSolution[-1])
 			rowcol_index = int(rowcol_index)
 			while ((axis, rowcol_index) in exploredStack):
+				print("index: ", rowcol_index, "was in exploredStack")
 				if (isConfigAllowed(xDomains, yDomains, axis, levelSolution[-1], rowcol_index) != True):
+					print("popped config not allowed")
 					backtrack = True
 					break
 				axis, rowcol_index = seenStack.pop()
+				print("current pop:",axis, rowcol_index)
+				print(levelSolution[-1])
 			# if((axis, rowcol_index) in exploredStack):
 			# 	#in explored stack, need to check if valid, if not bt
 			# 	if (isConfigAllowed(xDomains, yDomains, axis, levelSolution[-1], rowcol_index) == True):
@@ -161,17 +173,29 @@ def solve(constraints):
 			# 	else:
 			# 		backtrack = True
 
-			if (True): 
+			if (not backtrack): 
 				#exploredStack.append((axis, rowcol_index))
 				# print("ROWCOL INDEX", rowcol_index)
 				if((axis == 'x') and (xDomains[rowcol_index] == [])):
+					print("set x Domains for index: ", rowcol_index)
 					xDomains[rowcol_index] = getDomain(constraints[0][rowcol_index], dim0)
 					xTempDomains[rowcol_index] = getDomain(constraints[0][rowcol_index], dim0)
-				elif((axis == 'y') and (yDomains[rowcol_index] == [])):
+				elif((axis == 'x') and (xTempDomains[rowcol_index] == []) and (rowcol_index not in wait_num)):
+					print("should not be back tracking here smh")
+					xTempDomains[rowcol_index] = copy.deepcopy(xDomains[rowcol_index])
+					print(wait_num)
+				if((axis == 'y') and (yDomains[rowcol_index] == [])):
+					print("set y Domains for index: ", rowcol_index)
 					yDomains[rowcol_index] = getDomain(constraints[1][rowcol_index], dim1)
 					yTempDomains[rowcol_index] = getDomain(constraints[1][rowcol_index], dim1)
+				elif((axis == 'y') and (yTempDomains[rowcol_index] == []) and (rowcol_index not in wait_num)):
+					print("should not be back tracking here smh")
+					print(wait_num)
+					yTempDomains[rowcol_index] = copy.deepcopy(yDomains[rowcol_index])
 				#configAllowed = False
 				#backtrack = False
+				print("configAllowed", configAllowed)
+				print("backtrack", backtrack)
 				while (not configAllowed and not backtrack):
 					# print("Rowcol index", rowcol_index)
 					# print("Length of xTempDomains, yTempDomains", len(xTempDomains), len(yTempDomains))
@@ -179,19 +203,21 @@ def solve(constraints):
 					# print("yTempDomains", yTempDomains)
 					
 					if (axis == 'x'):
-						# print("xTempDomains", xTempDomains[rowcol_index])
+						print("xTempDomains", xTempDomains[rowcol_index])
 						if (len(xTempDomains[rowcol_index]) == 0):
 							#xTempDomains[rowcol_index] = copy.deepcopy(xDomains[rowcol_index])
 							backtrack = True
 						else:
+							print("reaches pop xTempDomains", rowcol_index)
 							currentConfig = xTempDomains[rowcol_index][-1]
 							xTempDomains[rowcol_index].pop()
 					if (axis == 'y'):
-						# print("yTempDomains", yTempDomains[rowcol_index])
+						print("yTempDomains", yTempDomains[rowcol_index])
 						if (len(yTempDomains[rowcol_index]) == 0):
 							#yTempDomains[rowcol_index] = copy.deepcopy(yDomains[rowcol_index])
 							backtrack = True
 						else:
+							print("reaches pop yTempDomains", rowcol_index)
 							currentConfig = yTempDomains[rowcol_index][-1]
 							yTempDomains[rowcol_index].pop()
 					#check if allowed:
@@ -200,30 +226,31 @@ def solve(constraints):
 					# print("Temp_grid", new_temp_grid)
 					configAllowed = isConfigAllowed(xDomains, yDomains, axis, new_temp_grid, rowcol_index)
 					# print("Config allowed", configAllowed)
-				levelSolution.append(new_temp_grid)
+				
 				if (configAllowed): #if allowed
 					print("axis, index: ", axis, ", ", rowcol_index)
 					print("Config allowed. currentConfig: ")
 					print(currentConfig)
 					print("current solution: ")
 					print(new_temp_grid)
+					text = input("prompt:")
 					if (axis == 'x'):
 						tempList = np.zeros((dim0, 2), dtype = 'int32')	
 					if (axis == 'y'):						
 						tempList = np.zeros((dim1, 2), dtype = 'int32')
-					#levelSolution.append(new_temp_grid)
+					levelSolution.append(new_temp_grid)
 					exploredStack.append((axis, rowcol_index))
 					#print("Level Solution:", levelSolution[-1])
 					for seen in range(len(currentConfig)):
 						if (axis == 'x'):
 							if currentConfig[seen] != 0:
-								tempList[seen] = (copy.deepcopy(yWeights[seen]))
+								tempList[seen] = (copy.deepcopy(yWeightsUnsorted[seen]))
 						if (axis == 'y'):
 							if currentConfig[seen] != 0:
-								tempList[seen] = (copy.deepcopy(xWeights[seen]))
-					print("before order temp list: ", tempList)
+								tempList[seen] = (copy.deepcopy(xWeightsUnsorted[seen]))
+					#print("before order temp list: ", tempList)
 					tempList = tempList[np.argsort(tempList[:,0])]
-					print("after order Temp list: ", tempList)
+					#print("after order Temp list: ", tempList)
 					for k in tempList: # put touched indices onto stack
 						if ((axis == 'x') and (k[1] != 0)):
 							print("adding to seenStack: (y,", k[1],")")
@@ -231,24 +258,47 @@ def solve(constraints):
 						if ((axis == 'y') and (k[1] != 0)):
 							print("adding to seenStack: (x,", k[1],")")
 							seenStack.append(('x', k[1]))
+			# if (count > 0):
+			# 	count-=1
+			# else:
+			print(wait_num)
+			if (wait_num):# and (justPop == True)):
+				wait_num.popleft()
+					#justPop = False
+			print(wait_num)
 			if (backtrack):
 				print(exploredStack)
 				print(seenStack)
 				#go to the last valid level solution
 				# print("Backtrack:",backtrack)
 				if ((axis == 'y') and ((seenStack[-1][0] != axis) or (seenStack[-1][1] != rowcol_index))):
-					yTempDomains[rowcol_index] = copy.deepcopy(yDomains[rowcol_index])
+					#yTempDomains[rowcol_index] = copy.deepcopy(yDomains[rowcol_index])
+					wait_num.append(rowcol_index)
+					print("appended ", rowcol_index, "to wait_num")
+					print(wait_num)
+					justPop = True
 					print(exploredStack[-1])
+					while(seenStack[-1][0]==axis):
+						seenStack.pop()
+					wait_num.append(exploredStack[-1][1])
 					seenStack.append(exploredStack.pop())
 					print(seenStack[-1])
 					levelSolution.pop()
-				elif ((axis == 'x') and (((seenStack[-1])[0] != axis) and ((seenStack[-1])[1] != rowcol_index))):
-					xTempDomains[rowcol_index] = copy.deepcopy(xDomains[rowcol_index])
+				elif ((axis == 'x') and (((seenStack[-1])[0] != axis) or ((seenStack[-1])[1] != rowcol_index))):
+					#xTempDomains[rowcol_index] = copy.deepcopy(xDomains[rowcol_index])
+					wait_num.append(rowcol_index)
+					print("appended ", rowcol_index, "to wait_num")
+					print(wait_num)
+					justPop = True
+					#count = 2
+					while(seenStack[-1][0]==axis):
+						seenStack.pop()
+					wait_num.append(exploredStack[-1][1])
 					seenStack.append(exploredStack.pop())
 					levelSolution.pop()
 				backtrack = False
-			#print(seenStack)
-			#print(exploredStack)
+			print("seenStack", seenStack)
+			print("exploredStack", exploredStack)
 
 	solutionFound = np.array(levelSolution[-1])
 	#view(solutionFound)
@@ -276,8 +326,8 @@ def calcWeights(constraints):
 	# print("unsorted:")
 	# print(xWeights)
 	# print(yWeights)
-	xWeights = xWeights[np.argsort(xWeights[:,0])]
-	yWeights = yWeights[np.argsort(yWeights[:,0])]
+	# xWeights = xWeights[np.argsort(xWeights[:,0])]
+	# yWeights = yWeights[np.argsort(yWeights[:,0])]
 
 	# print("sorted")
 	# print(xWeights)
