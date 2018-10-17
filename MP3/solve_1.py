@@ -8,7 +8,6 @@ import sys
 
 import time
 
-solution = []
 def solve(constraints):
 	"""
 	Implement me!!!!!!!
@@ -89,17 +88,14 @@ def solve(constraints):
 	rowList = constraints[0]
 	colList = constraints[1]
 
-	# for r in rowList:
-	# 	print(r)
+	for x in rowList:
+		domain = getDomain(x, dim1)
+	for y in colList:
+		domain = getDomain(y, dim0)
 
-	# print('\n')
-
-	# for c in colList:
-	# 	print(c)
-
-	#check get domains
-	# for x in rowList:
-	# 	domain = getDomain()
+	end = time.time()
+	print('time to get domains')
+	print(end - s)
 
 	xDomains = [[] for i in range(dim0)]
 	yDomains = [[] for i in range(dim1)]
@@ -107,24 +103,14 @@ def solve(constraints):
 
 	xWeightsUnsorted, yWeightsUnsorted = calcWeights(constraints)
 
-	# print("xWeightsUnsorted: ", xWeightsUnsorted)
-	# print("yWeightsUnsorted: ", yWeightsUnsorted)
-
 	xWeights_indices = np.argsort(xWeightsUnsorted[:,0])[::-1]
 	yWeights_indices = np.argsort(yWeightsUnsorted[:,0])[::-1]
 
-	# print("xWeights_indices: ", xWeights_indices)
-	# print("yWeights_indices: ", yWeights_indices)
 
 	xWeights = xWeightsUnsorted[xWeights_indices]
 	yWeights = yWeightsUnsorted[yWeights_indices]
 
-	# print("xWeights: ", xWeights)
-	# print("yWeights: ", yWeights)
-
-
 	levelSolution = []
-	# levelSolutionidx = 1
 	
 	temp_grid = np.zeros((dim0, dim1), dtype='int32')
 
@@ -141,54 +127,18 @@ def solve(constraints):
 	changeFlag = True
 	#Choose what our variable is
 
-	# if(sum_x_weights <= sum_y_weights):
-	# 	domain = getDomain(constraints[1][yWeights_indices[0]], dim0)
-	# 	yDomains[yWeights_indices[0]] = domain
-	# 	axis = 'y'
-	# else:
-	# 	domain = getDomain(constraints[0][xWeights_indices[0]], dim1)
-	# 	xDomains[xWeights_indices[0]] = domain
-	# 	axis = 'x'
+	if(sum_x_weights <= sum_y_weights):
+		domain = getDomain(constraints[1][yWeights_indices[0]], dim0)
+		yDomains[yWeights_indices[0]] = domain
+		axis = 'y'
+	else:
+		domain = getDomain(constraints[0][xWeights_indices[0]], dim1)
+		xDomains[xWeights_indices[0]] = domain
+		axis = 'x'
 	# xTempDomains = copy.deepcopy(xDomains)
 	# yTempDomains = copy.deepcopy(yDomains)
 
-	# print('axis: ', axis)
-	global solution
-	solution = initialMazeReduce(constraints)
-
-	rows, cols = findVariableConstraintsInitial(constraints)
-
-	# xdom = getDomain(constraints[0][0], dim1)
-	# ydom = getDomain(constraints[1][0], dim0)
-
-	# print(len(xdom[0]))
-	# print(len(ydom[0]))
-
-	# print('rows:', type(list(rows[0][0])))
-	# print('cols: ', len(cols[0][0]))
-
-	# print(rows[0])
-
-	for r in range(len(rows)):
-		# if rows[r] == []:
-		# 	print('hi')
-		for i in range(len(rows[r])):
-			# if rows[r][i] == []:
-			# 	print('hi')
-			if type(rows[r][i]) is not int:
-				rows[r][i] = list(rows[r][i])
-				rows[r][i] = [int(j) for j in rows[r][i]]
-	
-	for c in range(len(cols)):
-		for i in range(len(cols[c])):
-			cols[c][i] = list(cols[c][i])
-			cols[c][i] = [int(j) for j in cols[c][i]]
-	
-
-	xDomains = rows
-	yDomains = cols
-
-	axis = 'x'
+	print('axis: ', axis)
 
 
 	if(axis == 'x'): #choosing rows as variables
@@ -255,14 +205,14 @@ def solve(constraints):
 #############################################
 
 def AC3_X(xDomains, xWeights_indices,yDomains, yWeights_indices, constraints, dim0, dim1):
-	# print('in AC3_X')
+	print('in AC3_X')
 
 	for x in xWeights_indices:
 			#Calculate D(X) only once per row
-			# print('x index: ', x)
+			print('x index: ', x)
 			if(xDomains[x] == []):
 				xDomains[x] = getDomain(constraints[0][x], dim1)
-			# print('got the domains')
+			print('got the domains')
 			for config_X in xDomains[x]:
 				for y in yWeights_indices:
 					if(yDomains[y] == []): #Only generate Y domains if we haven't stored them yet
@@ -278,25 +228,25 @@ def AC3_X(xDomains, xWeights_indices,yDomains, yWeights_indices, constraints, di
 	return xDomains
 
 def AC3_Y(xDomains, xWeights_indices,yDomains, yWeights_indices, constraints, dim0, dim1):
-	# print('in AC3_Y')
+	print('in AC3_Y')
 	for y in yWeights_indices:
-			# print('y index: ', y)
+			print('y index: ', y)
 
 			#Calculate D(X) only once per row
 			if(yDomains[y] == []):
 				yDomains[y] = getDomain(constraints[1][y], dim0)
-			# print('constraints: ', constraints[1][y])
-			# print('got the domains')
+			print('constraints: ', constraints[1][y])
+			print('got the domains')
 
 			#Calculate D(Y)
 			for config_Y in yDomains[y]:
-				# print('config y: ', config_Y)
+				print('config y: ', config_Y)
 				for x in xWeights_indices:
-					# print('x: ', x)
+					print('x: ', x)
 					if(xDomains[x] == []): #Only generate Y domains if we haven't stored them yet
 						xDomains[x] = getDomain(constraints[0][x], dim1)
-					# print('xdomains: ',xDomains[x])
-					# print('got the x domains')
+					print('xdomains: ',xDomains[x])
+					print('got the x domains')
 					changeFlag = True
 				
 					for config_X in xDomains[x]:
@@ -478,151 +428,6 @@ def isStateAllowedHelper(constraints, configuration):
 # 			return False
 	
 # 	return True
-
-def initialMazeReduce(constraints):
-#Iterate through the constraints for each column.
-#We first need to minimze the size of the problem by finding
-#overlap within the potential positions that must be filled
-	dim0 = len(constraints[0])
-	dim1 = len(constraints[1])
-	solution = np.zeros((dim0, dim1))
-	for i in range(0, dim0):
-		numBlocks = len(constraints[0][i])
-		spaceAvailable = np.zeros((1, numBlocks))
-		subblockOpen = np.zeros((1, numBlocks))
-		leftMostSpace = np.zeros((1, numBlocks))
-		for j in range (0, numBlocks):
-			spaceAvailable[0][j] = dim1-numBlocks+1
-			for k in range(0, numBlocks):
-				if(k!=j):
-					spaceAvailable[0][j]-=constraints[0][i][k][0]
-			subblockOpen[0][j] = 2 * constraints[0][i][j][0] - spaceAvailable[0][j]
-			if(j>0):
-				leftMostSpace[0][j] = leftMostSpace[0][j-1] + constraints[0][i][j-1][0]+1
-			else:
-				leftMostSpace[0][j] = 0
-			if(subblockOpen[0][j] > 0):
-				#Still need to add the leftmost position each can occupy
-				startingPosition = leftMostSpace[0][j] + spaceAvailable[0][j] - constraints[0][i][j][0]
-				for k in range(int(startingPosition), int(startingPosition+subblockOpen[0][j])):
-					solution[i][k] = 1
-	#Going by Rows
-	for i in range(0, dim1):
-		numBlocks = len(constraints[1][i])
-		spaceAvailable = np.zeros((numBlocks, 1))
-		subblockOpen = np.zeros((numBlocks, 1))
-		leftMostSpace = np.zeros((numBlocks, 1))
-		for j in range (0, numBlocks):
-			spaceAvailable[j][0] = dim0-numBlocks+1
-			for k in range(0, numBlocks):
-				if(k!=j):
-					spaceAvailable[j][0]-=constraints[1][i][k][0]
-			subblockOpen[j][0] = 2 * constraints[1][i][j][0] - spaceAvailable[j][0]
-			if(j>0):
-				leftMostSpace[j][0] = leftMostSpace[j-1][0] + constraints[1][i][j-1][0]+1
-			else:
-				leftMostSpace[j][0] = 0
-			if(subblockOpen[j][0] > 0):
-				#Still need to add the leftmost position each can occupy
-				startingPosition = leftMostSpace[j][0] + spaceAvailable[j][0] - constraints[1][i][j][0]
-				for k in range(int(startingPosition), int(startingPosition+subblockOpen[j][0])):
-					solution[k][i] = 1
-	return solution
-
-
-def findVariableConstraintsInitial(constraints):
-	dim0 = len(constraints[0])
-	dim1 = len(constraints[1])
-	colSpace = [[] for i in range (dim1)]
-	rowSpace = [[] for i in range (dim0)]
-	#Iterate through each row to calculate all possible combinations for each
-	for row in range(0,dim0):
-		#find seed pattern
-		if constraints[0][row] == []:
-			rowSpace[row] = [np.array([0]*dim1)]
-			print('my rowspace: ', [np.array([0]*dim1)])
-			continue
-		pattern = []
-		currPosition = 0
-		for block in range (0, len(constraints[0][row])):
-			pattern.append(list(range(currPosition, constraints[0][row][block][0]+currPosition)))
-			currPosition+=constraints[0][row][block][0]+1
-		# print(constraints[0][0])
-		# print("here")
-		rowSpace[row] =variableValuesHelperRow(pattern, pattern[len(pattern)-1][0], dim1-len(pattern[len(pattern)-1])+1, len(constraints[0][row]) -1 ,dim1, row)
-		print('rowspace:', rowSpace[row])
-	#Iterate through each column
-
-	for col in range(0, dim1):
-		if constraints[1][col] == []:
-			rowSpace[col] = [0] * dim0
-			continue
-		pattern = []
-		currPosition = 0
-		for block in range(0, len(constraints[1][col])):
-			pattern.append(list(range(currPosition, constraints[1][col][block][0]+currPosition)))
-			currPosition+=constraints[1][col][block][0]+1
-		colSpace[col] = variableValuesHelperCol(pattern, pattern[len(pattern)-1][0], dim0-len(pattern[len(pattern)-1])+1, len(constraints[1][col])-1, dim0, col)
-	return rowSpace, colSpace
-
-def variableValuesHelperRow(pattern, first, last, currentIdx, length, currentRow):
-	#record the current configuration before shifting / recursive calls
-	solutionReturn = []
-	#Shift current index to the right while we can
-	#Recursively call for each value in the iteration
-	tempPattern = copy.deepcopy(pattern)
-	for i in range (first, last):
-		#Take picture on lowest index
-		if(currentIdx == 0):
-			newArray = np.zeros(length)
-			for k in range(0, len(tempPattern)):
-				for j in range(0, len(tempPattern[k])):
-					newArray[tempPattern[k][j]] =1
-			comparison = solution[currentRow] - newArray
-			#CHANGE THIS CHANGE THIS
-			if(all(k<=0 for k in comparison)):
-				solutionReturn.append(newArray)
-		#Shifting each value in the current index, i.e. moving every block in block list over 1
-		if(currentIdx>0):
-			arrayReturned = variableValuesHelperRow(tempPattern, tempPattern[currentIdx-1][0], i-len(tempPattern[currentIdx-1]), currentIdx-1, length, currentRow)
-			for k in range (0, len(arrayReturned)):
-				solutionReturn.append(arrayReturned[k])
-		for j in range (0, len(pattern[currentIdx])):
-			tempPattern[currentIdx][j]+=1
-		# We go one layer deeper with the shift
-	return solutionReturn
-
-
-def variableValuesHelperCol(pattern, first, last, currentIdx, length, currentCol):
-	#record the current configuration before shifting / recursive calls
-	solutionReturn = []
-	#Shift current index to the right while we can
-	#Recursively call for each value in the iteration
-	tempPattern = copy.deepcopy(pattern)
-	for i in range (first, last):
-		#Take picture on lowest index
-		if(currentIdx == 0):
-			newArray = np.zeros(length)
-			for k in range(0, len(tempPattern)):
-				for j in range(0, len(tempPattern[k])):
-					newArray[tempPattern[k][j]] =1
-			solutionCheck = np.zeros(length)
-			for m in range(0, length):
-				solutionCheck[m] = solution[m][currentCol]
-			comparison = solutionCheck - newArray
-			#CHANGE THIS CHANGE THIS
-			if(all(k<=0 for k in comparison)):
-				solutionReturn.append(newArray)
-		#Shifting each value in the current index, i.e. moving every block in block list over 1
-		if(currentIdx>0):
-			arrayReturned = variableValuesHelperCol(tempPattern, tempPattern[currentIdx-1][0], i-len(tempPattern[currentIdx-1]), currentIdx-1, length, currentCol)
-			for k in range (0, len(arrayReturned)):
-				solutionReturn.append(arrayReturned[k])
-		for j in range (0, len(pattern[currentIdx])):
-			tempPattern[currentIdx][j]+=1
-		# We go one layer deeper with the shift
-	return solutionReturn
-
 
 def getDomain(constraints, dimension):
 
