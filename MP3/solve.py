@@ -80,8 +80,7 @@ def solve(constraints):
 
 
 	"""
-	# s = time.time()
-
+	s = time.time()
 
 	dim0 = len(constraints[0])
 	dim1 = len(constraints[1])
@@ -89,194 +88,333 @@ def solve(constraints):
 	rowList = constraints[0]
 	colList = constraints[1]
 
-	xDomains = []
-	yDomains = []
+	xDomains = [[] for i in range(dim0)]
+	yDomains = [[] for i in range(dim1)]
 
-	# for i in rowList:
-	# 	print(i)
 
-	# print('rowlist: ', rowList)
-	# print('colList: ', colList)
+	xWeightsUnsorted, yWeightsUnsorted = calcWeights(constraints)
 
-	for x in range(dim0):
-		# print("rowlist: ", rowList[x])
-		domain = getDomain(rowList[x], dim1)
-		#heapq.heappush(xDomains, (len(domain),'x', x, domain))
-		xDomains.append((len(domain),'x', x, domain))
-	
-	for y in range(dim1):
-		# print('colList: ', colList[y])
-		domain = getDomain(colList[y], dim0)
-		#heapq.heappush(yDomains, (len(domain),'y', y, domain))
-		yDomains.append((len(domain),'y', y, domain))
+	# print("xWeightsUnsorted: ", xWeightsUnsorted)
+	# print("yWeightsUnsorted: ", yWeightsUnsorted)
 
-	# for i in xDomains:
-	# 	print(i, '\n')
-	#sort the x and y domains so that we can start with the most constrained index
-	# heapq.heapify(xDomains)
-	# heapq.heapify(yDomains)
-	
-	# print('xdomains')
-	# for i in xDomains:
-	# 	print(i, '\n')
+	xWeights_indices = np.argsort(xWeightsUnsorted[:,0])[::-1]
+	yWeights_indices = np.argsort(yWeightsUnsorted[:,0])[::-1]
 
-	# print('ydomains')
-	# for i in yDomains:
-	# 	print(i, '\n')
+	# print("xWeights_indices: ", xWeights_indices)
+	# print("yWeights_indices: ", yWeights_indices)
 
-	
-	# if xDomains[0][0] < yDomains[0][0]:
-	# 	min_constrained = xDomains[0]
-	# else:
-	# 	min_constrained = yDomains[0]
+	xWeights = xWeightsUnsorted[xWeights_indices]
+	yWeights = yWeightsUnsorted[yWeights_indices]
 
-	
+	# print("xWeights: ", xWeights)
+	# print("yWeights: ", yWeights)
+
 
 	levelSolution = []
-	levelSolutionidx = 1
+	# levelSolutionidx = 1
 	
-	temp_grid = np.zeros((dim0, dim1))
-	temp_grid = temp_grid.astype(int)
+	temp_grid = np.zeros((dim0, dim1), dtype='int32')
 
 	levelSolution.append(temp_grid)
 
-	# x or y, index, one possible configuration
-	curr_x_idx = 0     #X indices that we've seen
-	curr_y_idx = -1	   #Y indices that we've seen
+	# #Tuple (Axis, index of row/col)
+	# seenStack = deque([])
+	# exploredStack = deque([])
 
-	x_idx = []
-	y_idx = []
+	sum_x_weights = np.sum(xWeights[:,0])
+	sum_y_weights = np.sum(yWeights[:,0])
 
-	dfs_stack = deque( [ (xDomains[0][1], xDomains[0][2], xDomains[0][3][0], levelSolutionidx) ] )
-	for config in xDomains[0][3]:
-		dfs_stack.append((xDomains[0][1], xDomains[0][2], config, levelSolutionidx))
+	axis = ''
+	changeFlag = True
+	#Choose what our variable is
 
-	while dfs_stack:
+	if(sum_x_weights <= sum_y_weights):
+		domain = getDomain(constraints[1][yWeights[-1][1]], dim0)
+		yDomains[yWeights[-1][1]] = domain
+		axis = 'y'
+	else:
+		domain = getDomain(constraints[0][xWeights[-1][1]], dim1)
+		xDomains[xWeights[-1][1]] = domain
+		axis = 'x'
+	# xTempDomains = copy.deepcopy(xDomains)
+	# yTempDomains = copy.deepcopy(yDomains)
 
-		axis, current_index, current_config, gar = dfs_stack.pop()
-		#text = input("prompt:")
-		if (isNonogramAllowed(xDomains, yDomains, levelSolution[levelSolutionidx-1]) == True):
-			break
+	if(axis == 'x'): #choosing rows as variables
+		#Generate all X configs
+		endCase = True
+		while  endCase:
 
-		else:
-			new_temp_grid = copy.deepcopy(levelSolution[levelSolutionidx-1]) #set new tempgrid equal to old good temp grid, then add new config in to ee if it works
-			new_temp_grid = addConfigToState(new_temp_grid, axis, current_index, current_config)
-			if (axis == 'x'):
-				tempAllowed = isStateAllowed(xDomains, yDomains, 'x', new_temp_grid) #ISSUE: comparing wrong. comparing an x and y column. will not fit
-			if (axis == 'y'):
-				tempAllowed = isStateAllowed(xDomains, yDomains, 'y', new_temp_grid) 
-			if (tempAllowed == True):
-				if (levelSolutionidx >= len(levelSolution)):
-					levelSolution.append(new_temp_grid)
-				else:
-					levelSolution[levelSolutionidx] = copy.deepcopy(new_temp_grid)
-				if (axis == 'x'): #xaxis
-					curr_y_idx += 1
-					levelSolutionidx += 1
-					for config in yDomains[curr_y_idx][3]: 
-						dfs_stack.append((yDomains[curr_y_idx][1], yDomains[curr_y_idx][2], config, levelSolutionidx))
-				if (axis == 'y'): #yaxis
-					curr_x_idx += 1
-					levelSolutionidx += 1
-					for config in xDomains[curr_x_idx][3]: 
-						dfs_stack.append((xDomains[curr_x_idx][1], xDomains[curr_x_idx][2], config, levelSolutionidx))
+			xDomains = AC3_X(xDomains, xWeights_indices, yDomains, yWeights_indices, constraints, dim0, dim1)
+			yDomains = AC3_Y(xDomains, xWeights_indices, yDomains, yWeights_indices, constraints, dim0, dim1)
 
-			# else just set down the first configuration in the list of domains
+			# print('new x domains: \n')
+			# for i in xDomains:
+			# 	print(len(i))
+			# print('new y domains: \n')
+			# for i in yDomains:
+			# 	print(len(i))
+
+			# if (sum([len(i) for i in xDomains]) == dim0) and (sum([len(i) for i in yDomains]) == dim1):
+			# 	endCase = False
+			if ((sum([len(i) for i in xDomains]) <= (dim0+dim1)) and (sum([len(i) for i in yDomains]) <= (dim0+dim1))):
+				endCase = False
+
+
+
+	elif(axis == 'y'): #choosing rows as variables
+		endCase = True
+		while  endCase:
+
+			yDomains = AC3_Y(xDomains, xWeights_indices, yDomains, yWeights_indices, constraints, dim0, dim1)
+			xDomains = AC3_X(xDomains, xWeights_indices, yDomains, yWeights_indices, constraints, dim0, dim1)
+
+			# print('new x domains: \n')
+			# for i in xDomains:
+			# 	print(len(i))
+			# print('new y domains: \n')
+			# for i in yDomains:
+			# 	print(len(i))
+
+			# if (sum([len(i) for i in xDomains]) == dim0) and (sum([len(i) for i in yDomains]) == dim1):
+			# 	endCase = False
+			if ((sum([len(i) for i in xDomains]) <= (dim0+dim1)) and (sum([len(i) for i in yDomains]) <= (dim0+dim1))):
+				endCase = False
+
+	for row in xDomains:
+		for config in xDomains[row]:
+			if(backtrack(config, yDomains[row], 0)):
+				#add this config at this row to our solution
+				temp_grid = addConfigToState(temp_grid, 'x', row, config)
 			else:
-				temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx = dfs_stack.pop()
-				if (temp_axis != axis or temp_current_index != current_index):
-					if (temp_axis == 'x'):
-						curr_x_idx = copy.copy(temp_current_index)
-						curr_y_idx = copy.copy(temp_current_index) - 1
-						levelSolutionidx = copy.copy(temp_levelSolutionidx)
-					if (temp_axis == 'y'):
-						curr_x_idx = copy.copy(temp_current_index)
-						curr_y_idx = copy.copy(temp_current_index)
-						levelSolutionidx = copy.copy(temp_levelSolutionidx)
-				dfs_stack.append((temp_axis, temp_current_index, temp_current_config, temp_levelSolutionidx))
-	print("levelSolutionidx: ", levelSolutionidx)
-	print("current indexes: ", curr_x_idx, curr_y_idx)
-	solutionFound = np.array(levelSolution[levelSolutionidx-1])
-	print(solutionFound.T)
-	return solutionFound.T
+				pass #remove config or just try next one
 
-	
+		#check valid solution?
+
+
+	for i in range(dim0):
+		x = xDomains[i][0]
+		for j in range(dim1):
+			temp_grid[i][j] = x[j]
+	end = time.time()
+	print("TIME: ", end-s)
+	return temp_grid
+
+
 
 #############################################
 # 				HELPER FUNCTIONS
 #############################################
 
+def AC3_X(xDomains, xWeights_indices,yDomains, yWeights_indices, constraints, dim0, dim1):
+	for x in xWeights_indices:
+			#Calculate D(X) only once per row
+			if(xDomains[x] == []):
+				xDomains[x] = getDomain(constraints[0][x], dim1)
+			for config_X in xDomains[x]:
+				for y in yWeights_indices:
+					if(yDomains[y] == []): #Only generate Y domains if we haven't stored them yet
+						yDomains[y] = getDomain(constraints[1][y], dim0)
+					changeFlag = True
+				
+					for config_Y in yDomains[y]:
+						if(config_X[y] == config_Y[x]):
+							changeFlag = False
+					if(changeFlag == True):   	#Remove configurations that don't work
+						xDomains[x].remove(config_X)	#Not sure if this line works
+						break
+	return xDomains
+
+def AC3_Y(xDomains, xWeights_indices,yDomains, yWeights_indices, constraints, dim0, dim1):
+	for y in yWeights_indices:
+			#Calculate D(X) only once per row
+			if(yDomains[y] == []):
+				yDomains[y] = getDomain(constraints[1][y], dim0)
+			#Calculate D(Y)
+			for config_Y in yDomains[y]:
+				for x in xWeights_indices:
+					if(xDomains[x] == []): #Only generate Y domains if we haven't stored them yet
+						xDomains[x] = getDomain(constraints[0][x], dim1)
+					changeFlag = True
+				
+					for config_X in xDomains[x]:
+						if(config_Y[x] == config_X[y]):
+							changeFlag = False
+					if(changeFlag == True):   	#Remove configurations that don't work
+						yDomains[y].remove(config_Y)	#Not sure if this line works
+						break
+	return yDomains
+
+
+def backtrack(configuration, domains, constraints, idx):
+	if(isValidSolution(constraints, temp_grid, axis)): #NEED to change config allowed check to compare config against all configs of opposite axis
+		if(backtrack(configuration, domains[idx+1], constraints, levelSolution, idx)):
+			return True
+		else:
+			return False
+	return False
+
+
+	# dfs_stack = deque([])	
+	
+	# for config in xDomains[0]:
+	# 	dfs_stack.append((config, 'x', xDomains[0].index(config)))
+
+	# while dfs_stack:
+	# 	print(levelSolution[-1])
+	# 	config, axis, index = dfs_stack.pop()
+
+	# 	if(isValidSolution(constraints, levelSolution[-1])):	#check entire nonogram to see if done
+	# 		break
+	# 	else:
+	# 		print("set backtrack")
+	# 		backtrack = True
+
+	# 	if(isConfigAllowed(xDomains, yDomains, axis, levelSolution[-1], index)):
+	# 		new_temp_grid = addConfigToState(levelSolution[-1], axis, index, config)
+	# 		levelSolution.append(new_temp_grid)
+	# 		if(axis == 'x'):
+	# 			for i in range(len(config)):
+	# 				for next_config in yDomains[i]:
+	# 					dfs_stack.append((next_config, 'y', yDomains[i].index(next_config)))
+	# 		if(axis == 'y'):
+	# 			for i in range(len(config)):
+	# 				for next_config in xDomains[i]:
+	# 					dfs_stack.append((next_config, 'x', xDomains[i].index(next_config)))
+
+	# 	if(backtrack):
+	# 		print("backtracking")
+	# 		backtrack_config, backtrack_axis, backtrack_index = dfs_stack.pop()
+	# 		while(backtrack_axis != axis):
+	# 			print(dfs_stack)
+	# 			backtrack_config, backtrack_axis, backtrack_index = dfs_stack.pop()
+	# 		if(len(levelSolution) > 1):
+	# 			levelSolution.pop()
+	# 		backtrack = False
+
+def calcWeights(constraints):
+	xWeights = np.zeros((len(constraints[0]),2), dtype='int32')
+	yWeights = np.zeros((len(constraints[1]),2), dtype='int32')
+	for i in range(len(constraints[0])):
+		for k in range(len(constraints[0][i])):
+			xWeights[i][0] += constraints[0][i][k][0]
+		xWeights[i][0] += (len(constraints[0][i]) -1)
+		xWeights[i][1] = i
+	for j in range(len(constraints[1])):
+		for l in range(len(constraints[1][j])):
+			yWeights[j][0] += constraints[1][j][l][0]
+		yWeights[j][0] += (len(constraints[1][j]) -1)
+		yWeights[j][1] = j
+
+	return xWeights, yWeights
+
 def addConfigToState(currentState, axis, current_index, configuration):
 	# currentState: the grid/nonogram
 	# configuration: what to add
 	#print(axis, current_index)
+	# print("Current:", current_index)
+	# print("currentState.shape[0]", currentState.shape[0])
+	# print("currentState.shape[1]", currentState.shape[1])
 	if (axis == 'y'):
-		for j in range(currentState.shape[1]):
-			currentState[current_index][j] = currentState[current_index][j] | configuration[j]
+		for j in range(currentState.shape[0]):
+			currentState[j][current_index] = currentState[j][current_index] | configuration[j]
 	if (axis == 'x'):
-		for i in range(currentState.shape[0]):
-			currentState[i][current_index] = currentState[i][current_index] | configuration[i]
+		for i in range(currentState.shape[1]):
+			currentState[current_index][i] = currentState[current_index][i] | configuration[i]
 	return currentState
 
-def isStateAllowed(xDomains, yDomains, axis, tempSolution):
-	#temp_grid: our full grid so far
-	#constraint: list of lists
-	#configuration: The configuration we are testing
-	#print(constraints)
-	#if (axis == 'x'):
-	for i in range(len(yDomains)):
-		col = tempSolution[i].tolist()
-		if (isStateAllowedHelper(yDomains[i][3], col) == False):
+def isValidSolution(constraints, solution, axis):
+	solution = np.array(solution)
+	dim0 = len(constraints[0])
+	dim1 = len(constraints[1])
+	if (solution.shape != (dim0, dim1)):
+		print("Wrong dimensions, try flipping")
+		return False
+	if(axis == 'x'):
+		for i in range(dim0):
+			rowconstraints = constraints[0][i]
+			rowcol = []
+			for j in range(dim1):
+				rowcol.append(solution[i][j])
+			if not (runs(rowcol) == rowconstraints):
+				return False
+    elif(axis == 'y'):    
+		for j in range(dim1):
+			colconstraints = constraints[1][j]
+			rowcol = []
+			for i in range(dim0):
+				rowcol.append(solution[i][j])
+			if not (runs(rowcol) == colconstraints):
+				return False
+	return True
+    
+def runs(rowcol):
+	"""
+	Returns the set of nonzero runs for a given row or column
+	For example, the row or column [1,1,0,2,2,0,1,2,1] returns
+	[[2,1],[2,2],[1,1],[1,2],[1,1]]
+	"""
+	run = []
+	curr_run = [1, rowcol[0]]
+	rowcol.append(0)
+	for i in range(1,len(rowcol)):
+	    if rowcol[i] != curr_run[1]:
+	        if curr_run[1] != 0:
+	            run.append(curr_run)
+	        curr_run = [1,rowcol[i]]
+	    else: 
+	        curr_run[0] += 1
+	return run
+
+def isConfigAllowed(xDomains, yDomains, axis, tempSolution, current_index):
+	if (axis == 'x'):
+		col = tempSolution[current_index].tolist()
+		if (isStateAllowedHelper(xDomains[current_index], col) == False):
 			return False
-	#if (axis == 'y'):
-	for j in range(len(xDomains)):
-		if (isStateAllowedHelper(xDomains[j][3], tempSolution[:,j]) == False):
+	if (axis == 'y'):
+		# print("current_index", current_index)
+		# print("size yDomains", len(yDomains))
+		# print("size tempSolution", len(tempSolution[0]))
+		if (isStateAllowedHelper(yDomains[current_index], tempSolution[:,current_index]) == False):
 			return False
 	return True
 
 def isStateAllowedHelper(constraints, configuration):
-	#temp_grid: our full grid so far
-	#constraint: list of lists
-	#configuration: The configuration we are testing
 	for con in constraints:
 		inv_con = [1 if i == 0 else 0 for i in configuration]
 		temp = [i | j for i, j in zip(inv_con, con)]
-		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
 		if 0 not in temp:
-			#there is a configuration that works
 			return True	
-
 	return False
 
-def isNonogramAllowedHelper(constraints, configuration):
-	#temp_grid: our full grid so far
-	#constraint: list of lists
-	#configuration: The configuration we are testing
-	for con in constraints:
-		temp = [1 if (configuration[i]==con[i]) else 0 for i in range(len(configuration))]
-		#temp = [i ^ j for i, j in zip(fig1, con)]
-		#print("temp sol in nonogram allowed?", temp)
-		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
-		if 0 not in temp:
-			#there is a configuration that works
-			return True	
+# def isNonogramAllowedHelper(constraints, configuration):
+# 	#temp_grid: our full grid so far
+# 	#constraint: list of lists
+# 	#configuration: The configuration we are testing
+# 	for con in constraints:
+# 		temp = [1 if (configuration[i]==con[i]) else 0 for i in range(len(configuration))]
+# 		#temp = [i ^ j for i, j in zip(fig1, con)]
+# 		#print("temp sol in nonogram allowed?", temp)
+# 		#check if temp is all ones. If so, this is a valid configuration. If not, then it is not
+# 		if 0 not in temp:
+# 			#there is a configuration that works
+# 			return True	
 
-	return False
+# 	return False
 
-def isNonogramAllowed(xDomains, yDomains, tempSolution):
-	#constraint: list of lists
-	#tempSolution: The configuration we are testing
-	#print(constraints)
-	#print(tempSolution)
-	for i in range(len(yDomains)):
-		col = tempSolution[i].tolist()
-		if (isNonogramAllowedHelper(yDomains[i][3], col) == False):
-			return False
-	for j in range(len(xDomains)):
-		if (isNonogramAllowedHelper(xDomains[j][3], tempSolution[:,j]) == False):
-			return False
+# def isNonogramAllowed(xDomains, yDomains, tempSolution):
+# 	#constraint: list of lists
+# 	#tempSolution: The configuration we are testing
+# 	#print(constraints)
+# 	#print(tempSolution)
+# 	for i in range(len(xDomains)):
+# 		col = tempSolution[i].tolist()
+# 		if (isNonogramAllowedHelper(xDomains[i][3], col) == False):
+# 			return False
+# 	for j in range(len(yDomains)):
+# 		if (isNonogramAllowedHelper(yDomains[j][3], tempSolution[:,j]) == False):
+# 			return False
 	
-	return True
+# 	return True
 
 def getDomain(constraints, dimension):
 
@@ -332,3 +470,31 @@ def isValid(posConfig):
         if (posConfig[i] == posConfig[i+1]) and (posConfig[i] != 0):
             return False
     return True
+
+def view(solution):
+    height = solution.shape[0]
+    width = solution.shape[1]
+    block_size = 20
+    offset = 32
+    
+    display = pygame.display.set_mode(
+        (
+            width * block_size + 2 * offset,
+            height * block_size + 2 * offset, 
+            
+        ), 0, 0)
+    
+    max_color = float(max(1, np.max(solution)))
+    for row in range(len(solution)):
+        for col in range(len(solution[0])):
+            shade = 255 - (solution[row,col]/max_color)*255
+            color = (shade, shade, shade)
+            rect = pygame.Rect(offset + col * block_size, 
+                               offset + row * block_size, 
+                               block_size, 
+                               block_size
+                    )
+            pygame.draw.rect(display, color, rect)
+    pygame.display.update()
+    
+    time.sleep(25)
