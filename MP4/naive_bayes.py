@@ -21,7 +21,7 @@ def naiveBayes(train_set, train_labels, dev_set, smoothing_parameter):
 
     train_labels - List of labels corresponding with train_set
     example: Suppose I had two emails, first one was spam and second one was ham.
-    Then train_labels := [0,1]
+    Then train_labels := [1,0]
 
     dev_set - List of list of words corresponding with each email that we are testing on
               It follows the same format as train_set
@@ -30,4 +30,15 @@ def naiveBayes(train_set, train_labels, dev_set, smoothing_parameter):
     """
     # TODO: Write your code here
     # return predicted labels of development set
+
+    #Training
+        #Build bag of words model using input emails (train_set)
+        #Compute log likelihoods log(P(Word | Type == Spam)
+            #Sum likelihoods across all words
+        #Smooth likelihoods using Laplace smoothing
+    #Test
+        #MLE classification based on sum of log probabilities
+
+
+
     return []
