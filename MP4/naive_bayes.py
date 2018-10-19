@@ -34,11 +34,41 @@ def naiveBayes(train_set, train_labels, dev_set, smoothing_parameter):
     #Training
         #Build bag of words model using input emails (train_set)
         #Compute log likelihoods log(P(Word | Type == Spam)
-            #Sum likelihoods across all words
+            #Sum likelihoods across all words in email
         #Smooth likelihoods using Laplace smoothing
+    
+    unigrams_ham = bag_of_words(train_set[:int(len(train_set)/2)])
+    unigrams_spam = bag_of_words(train_set[int(len(train_set)/2):])
+ 
+    ham_prob = dict([('', 0)])
+    spam_prob = dict([('', 0)])
+
+    likelihoods = dict([('',0)])
+    for email in train_set:
+        for word in email:
+            if(word in unigrams_ham):
+                ham_prob[word] += np.log(unigrams_ham[word]/len(email))
+            elif(word in unigrams_spam):
+                spam_prob[word] += np.log(unigrams_spam[word]/len(email))
+
+
+
     #Test
         #MLE classification based on sum of log probabilities
 
 
 
     return []
+
+def bag_of_words(data_set):
+    unigrams = dict([('', 0)])
+
+    for email in range(len(data_set)):
+        for word in data_set[email]:
+            if(word != ('.' or '.\r\n' or ',' or ',\r\n' or '!' or '!\r\n' or '?' or '?\r\n')):
+                if(word not in unigrams):
+                    unigrams[word] = 1
+                else:
+                    unigrams[word]+=1
+
+    return unigrams
