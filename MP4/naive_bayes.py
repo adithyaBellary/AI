@@ -12,6 +12,7 @@ This is the main entry point for MP4. You should only modify code
 within this file -- the unrevised staff files will be used for all other
 files and classes when code is run, so be careful to not modify anything else.
 """
+import numpy as np
 
 def naiveBayes(train_set, train_labels, dev_set, smoothing_parameter):
     """
@@ -37,38 +38,59 @@ def naiveBayes(train_set, train_labels, dev_set, smoothing_parameter):
             #Sum likelihoods across all words in email
         #Smooth likelihoods using Laplace smoothing
     
-    unigrams_ham = bag_of_words(train_set[:int(len(train_set)/2)])
-    unigrams_spam = bag_of_words(train_set[int(len(train_set)/2):])
+    unigrams_ham, ham_count = bag_of_words(train_set[:int(len(train_set)/2)])
+    unigrams_spam, spam_count = bag_of_words(train_set[int(len(train_set)/2):])
  
+    # print(unigrams_spam)
+
     ham_prob = dict([('', 0)])
     spam_prob = dict([('', 0)])
 
     likelihoods = dict([('',0)])
-    for email in train_set:
-        for word in email:
-            if(word in unigrams_ham):
-                ham_prob[word] += np.log(unigrams_ham[word]/len(email))
-            elif(word in unigrams_spam):
-                spam_prob[word] += np.log(unigrams_spam[word]/len(email))
+    
+    for word in unigrams_ham:
+        ham_prob[word] = np.log((unigrams_ham[word] + smoothing_parameter)/(ham_count + (smoothing_parameter*(len(unigrams_ham)+1))))
 
-
+    for word in unigrams_spam:
+        spam_prob[word] = np.log((unigrams_spam[word] + smoothing_parameter)/(spam_count + (smoothing_parameter*(len(unigrams_spam)+1))))
 
     #Test
         #MLE classification based on sum of log probabilities
 
+    ham_likelihood = 0
+    spam_likelihood = 0
+    labels = []
 
-
-    return []
+    for email in dev_set:
+        ham_likelihood = 0
+        spam_likelihood = 0
+        
+        for word in email:
+            if word in ham_prob:
+                ham_likelihood += ham_prob[word]
+            elif (word not in ham_prob):
+                ham_likelihood += np.log(smoothing_parameter/(ham_count + (smoothing_parameter*(len(unigrams_ham)+1))))
+            if word in spam_prob:
+                spam_likelihood += spam_prob[word]
+            elif (word not in spam_prob):
+                spam_likelihood += np.log(smoothing_parameter/(spam_count + (smoothing_parameter*(len(unigrams_spam)+1))))
+        
+        if (ham_likelihood) > (spam_likelihood):
+            labels.append(0)
+        elif (ham_likelihood) < (spam_likelihood):
+            labels.append(1)
+    return labels
 
 def bag_of_words(data_set):
     unigrams = dict([('', 0)])
-
+    count = 0
     for email in range(len(data_set)):
         for word in data_set[email]:
+            count += 1
             if(word != ('.' or '.\r\n' or ',' or ',\r\n' or '!' or '!\r\n' or '?' or '?\r\n')):
                 if(word not in unigrams):
                     unigrams[word] = 1
                 else:
                     unigrams[word]+=1
 
-    return unigrams
+    return unigrams, count
