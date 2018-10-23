@@ -38,8 +38,7 @@ def naiveBayes(train_set, train_labels, dev_set, smoothing_parameter):
             #Sum likelihoods across all words in email
         #Smooth likelihoods using Laplace smoothing
     
-    unigrams_ham, ham_count = bag_of_words(train_set[:int(len(train_set)/2)])
-    unigrams_spam, spam_count = bag_of_words(train_set[int(len(train_set)/2):])
+    unigrams_ham, ham_count, unigrams_spam, spam_count = bag_of_words(train_set, train_labels)
  
     # print(unigrams_spam)
 
@@ -81,16 +80,27 @@ def naiveBayes(train_set, train_labels, dev_set, smoothing_parameter):
             labels.append(1)
     return labels
 
-def bag_of_words(data_set):
-    unigrams = dict([('', 0)])
-    count = 0
+def bag_of_words(data_set, train_labels):
+    unigrams_ham = dict([('', 0)])
+    unigrams_spam = dict([('', 0)])
+    ham_count = 0
+    spam_count = 0
     for email in range(len(data_set)):
-        for word in data_set[email]:
-            count += 1
-            if(word != ('.' or '.\r\n' or ',' or ',\r\n' or '!' or '!\r\n' or '?' or '?\r\n')):
-                if(word not in unigrams):
-                    unigrams[word] = 1
-                else:
-                    unigrams[word]+=1
+        if train_labels[email] == 0: #ham
+            for word in data_set[email]:
+                ham_count += 1
+                if(word != ('.' or '.\r\n' or ',' or ',\r\n' or '!' or '!\r\n' or '?' or '?\r\n')):
+                    if(word not in unigrams_ham):
+                        unigrams_ham[word] = 1
+                    else:
+                        unigrams_ham[word]+=1
+        elif train_labels[email] == 1: #spam
+            for word in data_set[email]:
+                spam_count += 1
+                if(word != ('.' or '.\r\n' or ',' or ',\r\n' or '!' or '!\r\n' or '?' or '?\r\n')):
+                    if(word not in unigrams_spam):
+                        unigrams_spam[word] = 1
+                    else:
+                        unigrams_spam[word]+=1
 
-    return unigrams, count
+    return unigrams_ham, ham_count, unigrams_spam, spam_count
