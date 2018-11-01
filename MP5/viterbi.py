@@ -7,6 +7,8 @@
 #
 # Created by Renxuan Wang (renxuan2@illinois.edu) on 10/18/2018
 
+import numpy as np
+
 """
 This is the main entry point for MP5. You should only modify code
 within this file -- the unrevised staff files will be used for all other
@@ -16,9 +18,9 @@ files and classes when code is run, so be careful to not modify anything else.
 '''
 TODO: implement the baseline algorithm.
 input:  training data (list of sentences, with tags on the words)
-        test data (list of sentences, no tags on the words)
+	test data (list of sentences, no tags on the words)
 output: list of sentences, each sentence is a list of (word,tag) pairs. 
-        E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
+	E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
 '''
 def baseline(train, test):
     predicts = []
@@ -40,7 +42,7 @@ def baseline(train, test):
 
     for sentence in train:
     	for tag in sentence:
-    		# print(tag)
+		# print(tag)
     		if tag[0] not in train_dict:		#if we haven't seen word yet, create new dictionary for POS and count
     			train_dict[tag[0]] = {}
     			train_dict[tag[0]][tag[1]] = 1
@@ -65,10 +67,26 @@ def baseline(train, test):
 '''
 TODO: implement the Viterbi algorithm.
 input:  training data (list of sentences, with tags on the words)
-        test data (list of sentences, no tags on the words)
+	test data (list of sentences, no tags on the words)
 output: list of sentences with tags on the words
-        E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
+	E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
 '''
 def viterbi(train, test):
-    predicts = []
-    return predicts
+	predicts = []
+	#calculate initial probabilties
+	initialProbabilities = {}
+	for sentence in train:
+		#for each sentense
+		if sentence[0][1] not in initialProbabilities:
+			initialProbabilities[sentence[0][1]] = 1/len(train)
+		else:
+			initialProbabilities[sentence[0][1]] += 1/len(train)
+	#convert to log probabilities
+	for key in initialProbabilities.keys():
+		initialProbabilities[key] = np.log(initialProbabilities[key])
+		
+	
+	
+
+	return predicts
+
