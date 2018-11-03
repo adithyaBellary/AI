@@ -149,40 +149,114 @@ def viterbi(train, test):
 			emissionProbabilities[key][tag] = np.log( (emissionProbabilities[key][tag] + alpha) / (tagCount + alpha * (len(emissionProbabilities[key]) + 1)) )
 
 
-	#Trellis creation
+	#sort the dictionaries
+	sortedKeys = sorted(initialProbabilities.keys())
+	temp_init = {}
+	temp_trans = {}
+	temp_em = {}
+	for key in sortedKeys:
+		temp_init[key] = initialProbabilities[key]
+		temp_trans[key] = transitionProbabilities[key]
+		temp_em[key] = emissionProbabilities[key]
+	
+	initialProbabilities = temp_init
+	transitionProbabilities = temp_trans
+	emissionProbabilities = temp_em
+
+
+
+	numTags = len(sortedKeys)
+	bigTrelly = []
 	for sentence in test:
-		newTrellis = {}
-		oldTrellis = {}
-		
-		for word in range(len(sentence)):
+		#for each sentence make an empty row for each 
+		lilTrelly = []	
+		for wordidx in range(len(sentence)):
+			tempTrelly = []
 			seenFlag = False
-			if word == 0:
-				#if we are on the first word
+			word = sentence[wordidx][0]
+			if wordidx == 0:
+				#if we are at the first word use the formula
+				
+				#check to see if we have seent the word before
 				for val in emissionProbabilities.values():
-					if val.get(sentence[word][0]) != None:
+					if val.get(sentence[wordidx][0]) != None:
 						#we have found the word
-						for initialKey in initialProbabilities:
-							oldTrellis[initialKey] = initialProbabilities[initialKey] * emissionProbabilities[initialKey][sentence[word][0]]
+						for tag in initialProbabilities:
+							#for each key
+							tempTrelly.append(initialProbabilities[tag] + emissionProbabilities[tag][word])
 						seenFlag = True
+						lilTrelly.append(tempTrelly)
+						break
+
 				if not seenFlag:
-					#if we have not seen the word yet
-					#optimiza smoothing
-					for initialKey in initialProbabilities:
-						oldTrellis[initialKey] = initialProbabilities[initialKey] * (alpha / len(initialProbabilities))
-				
-				
+					#if we havent seent the flag yet
+					for tag in initialProbabilities:
+						tempTrelly.append(initialProbabilities[tag]) #+ ###SMOOTHED PROBABILITY)	
+					lilTrelly.append(tempTrelly)
+					
 			else:
-				#every other word
+				#for every other word
+
+				#check if we have seen the word or not
 				for val in emissionProbabilities.values():
-					if val.get(sentence[word][0]) != None:
+					if val.get(word) != None:
 						#we have found the word
-						
 						seenFlag = True
-				if not seenFlag:
-					#if we have not seen the word yet
-					#optimiza smoothing
-					for initialKey in initialProbabilities:
-						newTrellis[initialKey] = initialProbabilities[initialKey] * (alpha / len(initialProbabilities))
+						break
+
+				tempTrelly = [0 for i in range(numTags)]
+				lilTrellyVals = [i for i, j in lilTrelly[-1]]
+				for i in range(numTags):
+					tempValues = []
+					for v in range(numTags):
+						if seenFlag:
+							x = lilTrellyVals[v] + transitionProbabilities[sortedKeys[v]][sortedKeys[i]] + emissionProbabilities[sortedKeys[i]][word]
+						else:
+							x = lilTrellyVals[v] + transitionProbabilities[sortedKeys[v]][sortedKeys[i]] ## SMOOTHENED PROB
+						tempValues.append(x)
+					
+					tempTrelly[i] = (max(tempValues), sortedKeys[np.argmax(tempValues)])
+
+				lilTrelly.append(tempTrelly)
+
+		bigTrelly.append(lilTrelly)
+
+	
+
+	# #Trellis creation
+	# for sentence in test:
+	# 	newTrellis = {}
+	# 	oldTrellis = {}
+		
+	# 	for word in range(len(sentence)):
+	# 		seenFlag = False
+	# 		if word == 0:
+	# 			#if we are on the first word
+	# 			for val in emissionProbabilities.values():
+	# 				if val.get(sentence[word][0]) != None:
+	# 					#we have found the word
+	# 					for initialKey in initialProbabilities:
+	# 						oldTrellis[initialKey] = initialProbabilities[initialKey] * emissionProbabilities[initialKey][sentence[word][0]]
+	# 					seenFlag = True
+	# 			if not seenFlag:
+	# 				#if we have not seen the word yet
+	# 				#optimiza smoothing
+	# 				for initialKey in initialProbabilities:
+	# 					oldTrellis[initialKey] = initialProbabilities[initialKey] * (alpha / len(initialProbabilities))
+				
+				
+	# 		else:
+	# 			#every other word
+	# 			for val in emissionProbabilities.values():
+	# 				if val.get(sentence[word][0]) != None:
+	# 					#we have found the word
+						
+	# 					seenFlag = True
+	# 			if not seenFlag:
+	# 				#if we have not seen the word yet
+	# 				#optimiza smoothing
+	# 				for initialKey in initialProbabilities:
+	# 					newTrellis[initialKey] = initialProbabilities[initialKey] * (alpha / len(initialProbabilities))
 
 
 
