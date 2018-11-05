@@ -74,7 +74,6 @@ output: list of sentences with tags on the words
 '''
 def viterbi(train, test):
 	predicts = []
-	#calculate initial probabilties
 	initialProbabilities = dict()
 	transitionProbabilities = dict()
 	emissionProbabilities = dict()
@@ -115,7 +114,7 @@ def viterbi(train, test):
 				emissionProbabilities[tag1][word1] += 1
 
 	alpha = 1.0
-	
+
 	num_noun = 0
 	for word in emissionProbabilities['NOUN']:
 		if emissionProbabilities['NOUN'][word] > 0:
@@ -153,12 +152,10 @@ def viterbi(train, test):
 	#convert emission counts to log probabilities and smooth
 	for key in POS_Keys:
 		for tag in emissionProbabilities[key]:
-			emissionProbabilities[key][tag] = np.log( (emissionProbabilities[key][tag] + alpha) / (tagCountDict[key] + alpha * (len(emissionProbabilities[key]) + 1)) )
+			emissionProbabilities[key][tag] = np.log((emissionProbabilities[key][tag] + alpha) / (tagCountDict[key] + alpha * (len(emissionProbabilities[key]) + 1)))
 
 	numTags = len(POS_Keys)
 	bigTrelly = []
-	seenCount = 0
-	unseenCount = 0
 	for sentence in test:
 		#for each sentence make an empty row for each 
 		lilTrelly = []	
@@ -166,7 +163,6 @@ def viterbi(train, test):
 			tempTrelly = []
 			seenFlag = False
 			word = sentence[wordidx]
-			# print(word)
 			if wordidx == 0:
 				#if we are at the first word use the formula
 				
@@ -175,13 +171,11 @@ def viterbi(train, test):
 					seenFlag = True
 				if seenFlag:
 					#if we have seen the flag yet set the emission probability 
-					seenCount += 1
 					for tag in POS_Keys:
 						tempTrelly.append(initialProbabilities[tag] + emissionProbabilities[tag][word]) 	
 					lilTrelly.append(tempTrelly)
 				else:
 					#if we havent seen the word yet
-					unseenCount += 1
 					for tag in POS_Keys:
 						if word in emissionProbabilities[key]:
 							emProb = emissionProbabilities[tag][word]
@@ -212,7 +206,7 @@ def viterbi(train, test):
 							elif POS_Keys[i] == 'ADJ':
 								x = lilTrellyVals[v] + transitionProbabilities[POS_Keys[v]][POS_Keys[i]] + np.log(prob_adj)
 							else:
-								x = lilTrellyVals[v] + transitionProbabilities[POS_Keys[v]][POS_Keys[i]] + np.log( (alpha / (tagCountDict[POS_Keys[i]] + alpha*(len(POS_Keys) +1) ) ))
+								x = lilTrellyVals[v] + transitionProbabilities[POS_Keys[v]][POS_Keys[i]] + np.log((alpha / (tagCountDict[POS_Keys[i]] + alpha*(len(POS_Keys) +1))))
 						tempValues.append(x)
 					tempTrelly[i] = (max(tempValues), POS_Keys[np.argmax(tempValues)])
 				lilTrelly.append(tempTrelly)
