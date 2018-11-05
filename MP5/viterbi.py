@@ -115,18 +115,18 @@ def viterbi(train, test):
 				emissionProbabilities[tag1][word1] += 1
 
 	alpha = 1.0
-
+	
 	num_noun = 0
 	for word in emissionProbabilities['NOUN']:
-		if emissionProbabilities['NOUN'][word]:
+		if emissionProbabilities['NOUN'][word] > 0:
 			num_noun += emissionProbabilities['NOUN'][word]
 	num_verb = 0
 	for word in emissionProbabilities['VERB']:
-		if emissionProbabilities['VERB'][word]:
+		if emissionProbabilities['VERB'][word] > 0:
 			num_verb += emissionProbabilities['VERB'][word]
 	num_adj = 0
 	for word in emissionProbabilities['ADJ']:
-		if emissionProbabilities['ADJ'][word]:
+		if emissionProbabilities['ADJ'][word] > 0:
 			num_adj += emissionProbabilities['ADJ'][word]
 	prob_noun = num_noun / (num_noun + num_adj + num_verb)
 	prob_verb = num_verb / (num_noun + num_adj + num_verb)
@@ -138,7 +138,6 @@ def viterbi(train, test):
 			if emissionProbabilities[key][word] > 0:
 				count += emissionProbabilities[key][word]
 		tagCountDict[key] = count
-	POS_choices = ['NOUN', 'VERB', 'ADJ']
 
 	#convert initial counts to log probabilities and smooth
 	for key in POS_Keys:
@@ -172,11 +171,8 @@ def viterbi(train, test):
 				#if we are at the first word use the formula
 				
 				#check to see if we have seent the word before
-				for val in emissionProbabilities.values():
-					if val.get(sentence[wordidx]) != None:
-						#we have found the word
-						seenFlag = True
-						break
+				if emissionProbabilities['NOUN'].get(sentence[wordidx]) != None:
+					seenFlag = True
 				if seenFlag:
 					#if we have seen the flag yet set the emission probability 
 					seenCount += 1
@@ -196,11 +192,8 @@ def viterbi(train, test):
 			else:
 				#for every other word
 				#check if we have seen the word or not
-				for val in emissionProbabilities.values():
-					if val.get(word) != None:
-						#we have found the word
-						seenFlag = True
-						break
+				if emissionProbabilities['NOUN'].get(sentence[wordidx]) != None:
+					seenFlag = True
 				tempTrelly = [0 for i in range(numTags)]
 				if wordidx == 1:
 					lilTrellyVals = lilTrelly[-1]
@@ -224,13 +217,14 @@ def viterbi(train, test):
 					tempTrelly[i] = (max(tempValues), POS_Keys[np.argmax(tempValues)])
 				lilTrelly.append(tempTrelly)
 		bigTrelly.append(lilTrelly)
-		
+
 	for t in range(len(bigTrelly)):
 		trellis = bigTrelly[t]
 		p = []
 		if len(test[t]) > 1:
 			most_prob_idx = np.argmax([i for i,j in trellis[-1]])
 		if len(test[t]) == 0:
+			predicts.append(p)
 			continue
 		if len(test[t]) == 1:
 			most_prob_idx = np.argmax(trellis)
