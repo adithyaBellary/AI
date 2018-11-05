@@ -63,7 +63,7 @@ def baseline(train, test):
 			temp_list.append((word, tag))
 		predicts.append(temp_list)
 	
-	return predicts
+	return predicts, [], []
 
 '''
 TODO: implement the Viterbi algorithm.
@@ -155,7 +155,11 @@ def viterbi(train, test):
 
 	numTags = len(POS_Keys)
 	bigTrelly = []
-	for sentence in test:
+	unseenWordList = []
+	seenWordList = []
+	for s in range(len(test)):
+		sentence = test[s]
+		sentenceFlag = False
 		#for each sentence make an empty row for each 
 		lilTrelly = []	
 		for wordidx in range(len(sentence)):
@@ -175,6 +179,7 @@ def viterbi(train, test):
 					lilTrelly.append(tempTrelly)
 				else:
 					#if we havent seen the word yet
+					sentenceFlag = True
 					for tag in POS_Keys:
 						if word in emissionProbabilities[key]:
 							emProb = emissionProbabilities[tag][word]
@@ -198,6 +203,7 @@ def viterbi(train, test):
 						if seenFlag:
 							x = lilTrellyVals[v] + transitionProbabilities[POS_Keys[v]][POS_Keys[i]] + emissionProbabilities[POS_Keys[i]][word]
 						else:
+							sentenceFlag = True
 							if POS_Keys[i] == 'NOUN':
 								x = lilTrellyVals[v] + transitionProbabilities[POS_Keys[v]][POS_Keys[i]] + np.log(prob_noun)
 							elif POS_Keys[i] == 'VERB':
@@ -210,6 +216,10 @@ def viterbi(train, test):
 					tempTrelly[i] = (max(tempValues), POS_Keys[np.argmax(tempValues)])
 				lilTrelly.append(tempTrelly)
 		bigTrelly.append(lilTrelly)
+		if sentenceFlag:
+			unseenWordList.append(s)
+		else:
+			seenWordList.append(s)
 
 	for t in range(len(bigTrelly)):
 		trellis = bigTrelly[t]
@@ -230,5 +240,6 @@ def viterbi(train, test):
 		p.reverse()
 		predicts.append(p)
 
-	return predicts
+
+	return predicts, unseenWordList, seenWordList
 
