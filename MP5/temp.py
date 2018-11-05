@@ -16,6 +16,6 @@
 # print(sorted_dict)
 
 
-a = [(1,2), (3,4), (5,6)]
-a_ = [i for i, j in a]
-print(argmax(a_))
+a = [1,2]
+a.reverse()
+print(a)
