@@ -78,8 +78,8 @@ def viterbi(train, test):
 	initialProbabilities = dict()
 	transitionProbabilities = dict()
 	emissionProbabilities = dict()
-
 	POS_Keys = ['NOUN', 'VERB', 'ADJ', 'ADV', 'PRON',  'DET', 'ADP', 'NUM', 'CONJ','PRT', '.', 'X']
+
 	#initialize dictionaries according to POS_Keys
 	for key in POS_Keys:
 		initialProbabilities[key] = 0
@@ -115,7 +115,6 @@ def viterbi(train, test):
 				emissionProbabilities[tag1][word1] += 1
 
 	alpha = 1.0
-		
 
 	num_noun = 0
 	for word in emissionProbabilities['NOUN']:
@@ -132,7 +131,6 @@ def viterbi(train, test):
 	prob_noun = num_noun / (num_noun + num_adj + num_verb)
 	prob_verb = num_verb / (num_noun + num_adj + num_verb)
 	prob_adj = num_adj / (num_noun + num_adj + num_verb)
-
 	tagCountDict = {}
 	for key in POS_Keys:
 		count = 0
@@ -140,70 +138,23 @@ def viterbi(train, test):
 			if emissionProbabilities[key][word] > 0:
 				count += emissionProbabilities[key][word]
 		tagCountDict[key] = count
-
-	# print(tagCountDict) 
-	# count = 0
-	# temp = dict()
-	# print(tagCountDict)
-	# for sentence in train:
-	# 	for word in sentence:
-	# 		if(word[1] in temp):
-	# 			temp[word[1]] += 1
-	# 		else:
-	# 			temp[word[1]] = 1
-	# print(temp)
-
-	# print(num_noun)
-	# print(num_verb)
-	# print(num_adj)
-
 	POS_choices = ['NOUN', 'VERB', 'ADJ']
-
-	# print(initialProbabilities)
 
 	#convert initial counts to log probabilities and smooth
 	for key in POS_Keys:
-		initialProbabilities[key] = np.log(initialProbabilities[key]/len(train))#np.log((initialProbabilities[key] + alpha) / (alpha*(len(POS_Keys) + 1) + len(train)))
-	# print(initialProbabilities)	
+		initialProbabilities[key] = np.log(initialProbabilities[key]/len(train))
 
 	#convert transition counts to log probabilities and smooth
 	for key in POS_Keys:
 		tagCount = 0
 		for tag in transitionProbabilities[key]:
 			tagCount += transitionProbabilities[key][tag]
-
 		for tag in transitionProbabilities[key]:
 			transitionProbabilities[key][tag] = np.log((transitionProbabilities[key][tag] + alpha)  / (tagCount + alpha*(len(POS_Keys) + 1)))
-
 	#convert emission counts to log probabilities and smooth
 	for key in POS_Keys:
-		# tagCount = 0
-		# for tag in emissionProbabilities[key]:
-		# 	tagCount += emissionProbabilities[key][tag]
-
 		for tag in emissionProbabilities[key]:
 			emissionProbabilities[key][tag] = np.log( (emissionProbabilities[key][tag] + alpha) / (tagCountDict[key] + alpha * (len(emissionProbabilities[key]) + 1)) )
-
-	# s = 0
-	# for key in initialProbabilities:
-	# 	s += initialProbabilities[key]
-	# print("initialProbabilities", s)
-
-	# s = 0
-	# for key in transitionProbabilities:
-	# 	s = 0
-	# 	for key2 in transitionProbabilities[key]:
-	# 		s += transitionProbabilities[key][key2]
-	# 	print("TransitionProbabilities", s)
-
-	# s = 0
-	# for key in emissionProbabilities:
-	# 	s = 0
-	# 	for key2 in emissionProbabilities[key]:
-	# 		s += emissionProbabilities[key][key2]
-	# 	print("emissionProbabilities", s)
-
-
 
 	numTags = len(POS_Keys)
 	bigTrelly = []
@@ -224,51 +175,37 @@ def viterbi(train, test):
 				for val in emissionProbabilities.values():
 					if val.get(sentence[wordidx]) != None:
 						#we have found the word
-
 						seenFlag = True
-						# lilTrelly.append(tempTrelly)
 						break
-
 				if seenFlag:
 					#if we have seen the flag yet set the emission probability 
 					seenCount += 1
-
 					for tag in POS_Keys:
-	
 						tempTrelly.append(initialProbabilities[tag] + emissionProbabilities[tag][word]) 	
-
 					lilTrelly.append(tempTrelly)
 				else:
 					#if we havent seen the word yet
-
-					####### FIGURE OUT ###################
 					unseenCount += 1
 					for tag in POS_Keys:
 						if word in emissionProbabilities[key]:
 							emProb = emissionProbabilities[tag][word]
 						else:
-							# pred_tag = np.random.choice(POS_choices, 1, p=[prob_noun, prob_verb, prob_adj])
 							emProb = np.log( (alpha / (tagCountDict[tag] + alpha*(len(POS_Keys) +1) ) )) 
 						tempTrelly.append(initialProbabilities[tag] + emProb) 	
-					lilTrelly.append(tempTrelly)
-
-					
+					lilTrelly.append(tempTrelly)	
 			else:
 				#for every other word
-
 				#check if we have seen the word or not
 				for val in emissionProbabilities.values():
 					if val.get(word) != None:
 						#we have found the word
 						seenFlag = True
 						break
-
 				tempTrelly = [0 for i in range(numTags)]
 				if wordidx == 1:
 					lilTrellyVals = lilTrelly[-1]
 				else:
 					lilTrellyVals = [i for i, j in lilTrelly[-1]]
-				
 				for i in range(numTags):
 					tempValues = []
 					for v in range(numTags):
@@ -283,51 +220,28 @@ def viterbi(train, test):
 								x = lilTrellyVals[v] + transitionProbabilities[POS_Keys[v]][POS_Keys[i]] + np.log(prob_adj)
 							else:
 								x = lilTrellyVals[v] + transitionProbabilities[POS_Keys[v]][POS_Keys[i]] + np.log( (alpha / (tagCountDict[POS_Keys[i]] + alpha*(len(POS_Keys) +1) ) ))
-
 						tempValues.append(x)
-					
 					tempTrelly[i] = (max(tempValues), POS_Keys[np.argmax(tempValues)])
-
 				lilTrelly.append(tempTrelly)
-
 		bigTrelly.append(lilTrelly)
-
-	# print(len(bigTrelly[0]))
-	
+		
 	for t in range(len(bigTrelly)):
 		trellis = bigTrelly[t]
-		#for each sentence
-		# print(trellis)
-		# print(len(trellis),'\n')
 		p = []
-		# print(test[t])
-		# print(t, len(trellis[-1]),'\n')
 		if len(test[t]) > 1:
 			most_prob_idx = np.argmax([i for i,j in trellis[-1]])
 		if len(test[t]) == 0:
 			continue
 		if len(test[t]) == 1:
 			most_prob_idx = np.argmax(trellis)
-
-		# most_prob_tuple = trellis[-1][most_prob_idx]
-
 		tup = (test[t][-1], POS_Keys[most_prob_idx])
 		p.append(tup)
-
 		for i in range((len(trellis)-1), 0, -1 ):
-			
 			tup = (test[t][i-1], trellis[i][most_prob_idx][1])
-
 			p.append(tup)
 			most_prob_idx = POS_Keys.index(trellis[i][most_prob_idx][1])
-
 		p.reverse()
-		# print(p,'\n')
-
 		predicts.append(p)
-	
-
-
 
 	return predicts
 
