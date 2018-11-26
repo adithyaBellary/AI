@@ -112,7 +112,7 @@ def viterbi(train, test):
 			else:
 				emissionProbabilities[tag1][word1] += 1
 
-	alpha = 1.0
+	alpha = 0.01
 
 	num_noun = 0
 	for word in emissionProbabilities['NOUN']:

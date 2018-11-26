@@ -112,7 +112,7 @@ def viterbi(train, test):
 			else:
 				emissionProbabilities[tag1][word1] += 1
 
-	alpha = 1.0
+	alpha = 0.01
 
 	num_noun = 0
 	for word in emissionProbabilities['NOUN']:
@@ -152,6 +152,12 @@ def viterbi(train, test):
 	for key in POS_Keys:
 		for tag in emissionProbabilities[key]:
 			emissionProbabilities[key][tag] = np.log((emissionProbabilities[key][tag] + alpha) / (tagCountDict[key] + alpha * (len(emissionProbabilities[key]) + 1)))
+	
+	# for key in POS_Keys:
+	# 	s = 0
+	# 	for word in emissionProbabilities[key]:
+	# 		s += emissionProbabilities[key][word]
+	# 	print(s)
 
 	numTags = len(POS_Keys)
 	bigTrelly = []

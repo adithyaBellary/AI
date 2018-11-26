@@ -54,6 +54,8 @@ def main(args):
         print("You are running the Viterbi algorithm!")
         predTags, unseenIdx, seenIdx = viterbi(train_set, strip_tags(test_set))
         check_seen_accuracy = False
+        # check_seen_accuracy = True
+
         accuracy = compute_accuracies(test_set, predTags, unseenIdx, seenIdx, check_seen_accuracy)
     if check_seen_accuracy:
         print("Accuracy of sentences with no unseen words")
