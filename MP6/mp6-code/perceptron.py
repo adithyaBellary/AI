@@ -82,76 +82,46 @@ def classify(train_set, train_labels, dev_set, learning_rate,max_iter):
     print('time:',b-a)
     return predictions
 
+def kNN(trainfeat,trainlabel,testfeat, k):
+    #Put your code here
+    N = trainfeat.shape[0]
+    d = trainfeat.shape[1]
+    V = testfeat.shape[0]
+    out = np.empty([V])
+    distances = np.empty([N])
+    for i in range(V):
+        for j in range(N):
+            # distances[j] = dist.euclidean(testfeat[i],trainfeat[j])
+            distances[j] = np.linalg.norm(testfeat[i] - trainfeat[j])
+        nnEval = np.argpartition(distances,k)[0:k] #Now have the indices of the training features for the NN classifier
+        labelEval = np.empty([k])
+        for l in range(k):
+            labelEval[l] = trainlabel[nnEval[l]]
+        # out[i] = stats.mode(labelEval)[0]
+        out[i] = mode(labelEval)[0]
+
+    
+    return out
+
+def mode(a, axis=0):
+    scores = np.unique(np.ravel(a)) # get ALL unique values
+    testshape = list(a.shape)
+    testshape[axis] = 1
+    oldmostfreq = np.zeros(testshape)
+    oldcounts = np.zeros(testshape)
+
+    for score in scores:
+        template = (a == score)
+        counts = np.expand_dims(np.sum(template, axis),axis)
+        mostfrequent = np.where(counts > oldcounts, score, oldmostfreq)
+        oldcounts = np.maximum(counts, oldcounts)
+        oldmostfreq = mostfrequent
+
+    return mostfrequent, oldcounts
+
 def classifyEC(train_set, train_labels, dev_set,learning_rate,max_iter):
-    # Write your code here if you would like to attempt the extra credit
-    N = train_set.shape[0]
-    n_input = train_set.shape[1]
-    n_hidden = 500
-    #one for each class
-    n_output = 2
-    parameters = {}
-    y = [1 if label else 0 for label in train_labels]
-    y_vec = np.zeros((train_set.shape[0],2))
-    for i in range(train_set.shape[0]):
-        y_vec[i][y[i]] = 1
-    W1 = np.random.randn(n_input,n_hidden)
-    W2 = np.random.randn(n_hidden,n_output)
-    b1 = np.zeros(shape=(1, n_hidden))
-    b2 = np.zeros(shape=(1, n_output))
-
-    for itrations in range(max_iter):
-        #make foreard pass
-
-        z1 = np.matmul(train_set,W1) + b1
-        a1 = np.tanh(z1)
-        z2 = np.matmul(a1, W2) + b2
-        # print('z2 shape:',z2.shape)
-        scores = np.exp(z2)
-        # scores = z2
-        print(scores)
-        probabilities = scores / np.sum(scores, axis=1, keepdims=True)
-        print(probabilities)
-
-
-        #backpropagation
-        
-        d3 = probabilities - y_vec
-
-        # print(probabilities.shape)
-        # print(y_vec.shape)
-        # print(d3.shape)
-
-        dL_dW2 = np.matmul(a1.T,d3)
-        dL_db2 = np.sum(d3, axis=0, keepdims=True)
-        d2 = np.matmul(d3, W2.T) * (1 - z1**2)
-        dL_dW1 = np.matmul(train_set.T, d2)
-        dL_db1 = np.sum(d2, axis=0)
-
-        reg_lambda = 0.01
-
-        dL_dW2 += reg_lambda * W2
-        dL_dW1 += reg_lambda * W1
-
-        #update gradients
-        W1 += -learning_rate * dL_dW1
-        W2 += -learning_rate * dL_dW2
-        b1 += -learning_rate * dL_db1
-        b2 += -learning_rate * dL_db2
-
-        paramaters = {'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2}
-
-
-        #check accuracy
-        preds_ =  [make_prediction(paramaters, x) for x in dev_set]
-        # compute_accuracies(preds_, dev_set, dev_labels)
-
-    return [make_prediction(parameters,x) for x in dev_set]
-
-def make_prediction(parameters, x):
-    W1, b1, W2, b2 = parameters['W1'], parameters['b1'], parameters['W2'], parameters['b2']
-    z1 = x.dot(W1) + b1
-    a1 = np.tanh(z1)
-    z2 = a1.dot(W2) + b2
-    exp_scores = np.exp(z2)
-    probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
-    return np.argmax(probs, axis=1)
+    a = time.time()
+    out = kNN(train_set, train_labels,dev_set, 10)
+    b = time.time()
+    print('total time:',b-a)
+    return out
