@@ -103,21 +103,21 @@ def kNN(trainfeat,trainlabel,testfeat, k):
     
     return out
 
-def mode(a, axis=0):
-    scores = np.unique(np.ravel(a)) # get ALL unique values
+def mode(a):
+    vals = np.unique(np.ravel(a)) # get ALL unique values
     testshape = list(a.shape)
-    testshape[axis] = 1
-    oldmostfreq = np.zeros(testshape)
-    oldcounts = np.zeros(testshape)
+    testshape[0] = 1
+    oldmax = np.zeros(testshape)
+    oldc = np.zeros(testshape)
 
-    for score in scores:
-        template = (a == score)
-        counts = np.expand_dims(np.sum(template, axis),axis)
-        mostfrequent = np.where(counts > oldcounts, score, oldmostfreq)
-        oldcounts = np.maximum(counts, oldcounts)
-        oldmostfreq = mostfrequent
+    for idx in range(len(vals)):
+        temp = (a == vals[idx])
+        counts = np.expand_dims(np.sum(temp, 0),0)
+        mf = np.where(counts > oldc, vals[idx], oldmax)
+        oldc = np.maximum(counts, oldc)
+        oldmax = mf
 
-    return mostfrequent, oldcounts
+    return mf, oldc
 
 def classifyEC(train_set, train_labels, dev_set,learning_rate,max_iter):
     a = time.time()
