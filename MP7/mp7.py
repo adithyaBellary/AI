@@ -19,7 +19,7 @@ class Application:
     def __init__(self, args):
         self.args = args
         self.env = Pong(self.args.opponent)
-        self.agent = Agent(self.env.get_actions())
+        self.agent = Agent(self.env.get_actions(), two_sided = self.args.opponent)
         
     def execute(self):
         if not self.args.human:

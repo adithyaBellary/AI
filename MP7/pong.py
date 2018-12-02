@@ -163,8 +163,9 @@ class PongGame:
                 self.ball_x *= -1
                 self.velocity_x *= -1
             else:
-                y_at_opponent_location = (self.ball_y - 
-                                          self.velocity_y *(self.ball_x)/self.velocity_x)
+                y_at_opponent_location = (self.ball_y -
+                                         self.velocity_y *(self.ball_x)/self.velocity_x)
+                y_at_opponent_location = min(max(0.0, y_at_opponent_location), 1.0)
                 if (y_at_opponent_location >= self.opponent_y and 
                     y_at_opponent_location <= self.opponent_y+self.paddle_height):
                     self.ball_x = - self.ball_x
@@ -172,8 +173,9 @@ class PongGame:
                     self.randomize_velocities()
                
         if self.ball_x > self.paddle_x:
-            y_at_paddle_location = (self.ball_y - 
-            self.velocity_y *(self.ball_x - self.paddle_x)/self.velocity_x )
+            y_at_paddle_location = (self.ball_y -
+                                    self.velocity_y *(self.ball_x - self.paddle_x)/self.velocity_x )
+            y_at_paddle_location = min(max(0.0, y_at_paddle_location), 1.0)
             if (y_at_paddle_location >= self.paddle_y and 
                 y_at_paddle_location <= self.paddle_y+self.paddle_height):
                 self.ball_x = 2 * self.paddle_x - self.ball_x
