@@ -20,26 +20,32 @@ class Agent:
         self.N = utils.create_q_table()
         self.pbounce = 0
         self.first = True
-
+        self.itrs = 0
 
     def act(self, state, bounces, done, won):
          #TODO - fill out this function
-        C = 1
+        C = 30
+        self.itrs += 1
+        #Discretize the continuous state space
+        if(self.prev_state[0] == 0 and self.prev_state[1] == 0 and self.prev_state[2] == 0 and self.prev_state[3] == 0 and self.prev_state[4] == 0):
+            x, y, vx, vy, pad = self.discretize(self.prev_state)
+            self.prev_state = [x, y, vx, vy, pad]
+
         ball_x, ball_y, v_x, v_y, paddle = self.discretize(state)
+
         if(self._train == True):
-            #Fill out Q Table according to update equation 
-                #Define reward function as #bounces (weighted using average) + done + previous state 
-            #(X_BINS,Y_BINS,V_X,V_Y,PADDLE_LOCATIONS,NUM_ACTIONS)
-            # [self.ball_x, self.ball_y, self.velocity_x, self.velocity_y,self.paddle_y,self.opponent_y,]
-            
-            #Discretize the continuous state space
 
             #TODO
-            r = np.random.randint(0, 20)
+            r = np.random.randint(0, 100)
 
             #From current state s, choose action a based on exploration vs. exploitation policy (implement epsilon-greedy approach)
-            epsilon = 10
-            gamma = .9
+            if(self.itrs < 50000):
+                epsilon = 50
+            elif(self.itrs < 70000):
+                epsilon = 15
+            else:
+                epsilon = 1
+            gamma = .95
 
             if(r <= epsilon or self.first == True):
                 
@@ -59,10 +65,10 @@ class Agent:
 
             #Observe reward R(s) and next state s'
             if (self.pbounce < bounces): # R->1
-                reward = 1
+                reward = bounces
 
             elif (done): # R->-1
-                reward = -1
+                reward = -10
 
             else: # R=>0
                 reward = 0
@@ -86,6 +92,11 @@ class Agent:
         discrete_ball_x = np.floor(state[0]*12) - 1
         discrete_ball_y = np.floor(state[1]*12) - 1
 
+        if(discrete_ball_x >= 11):
+            discrete_ball_x = 11
+        if(discrete_ball_y >= 11):
+            discrete_ball_y = 11
+
         if(state[2] >= 0):
             discrete_v_x = 1
         else:
@@ -98,7 +109,7 @@ class Agent:
         else:
             discrete_v_y = -1
 
-        if(state[4] == 0.8):
+        if(state[4] >= 0.8):
             discrete_paddle = 11
         else:
             discrete_paddle = np.floor((12*state[4])/1-0.2)
