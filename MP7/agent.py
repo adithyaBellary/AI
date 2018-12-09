@@ -24,7 +24,7 @@ class Agent:
 
     def act(self, state, bounces, done, won):
          #TODO - fill out this function
-        C = 30
+        C = 45
         self.itrs += 1
         #Discretize the continuous state space
         if(self.prev_state[0] == 0 and self.prev_state[1] == 0 and self.prev_state[2] == 0 and self.prev_state[3] == 0 and self.prev_state[4] == 0):
@@ -39,12 +39,12 @@ class Agent:
             r = np.random.randint(0, 100)
 
             #From current state s, choose action a based on exploration vs. exploitation policy (implement epsilon-greedy approach)
-            if(self.itrs < 50000):
-                epsilon = 50
-            elif(self.itrs < 70000):
+            if(self.itrs < 100000): 
+                epsilon = 75
+            elif(self.itrs < 150000):
                 epsilon = 15
             else:
-                epsilon = 1
+                epsilon = 1	
             gamma = .95
 
             if(r <= epsilon or self.first == True):
@@ -64,16 +64,18 @@ class Agent:
             alpha = C / (C + self.N[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action])
 
             #Observe reward R(s) and next state s'
-            if (self.pbounce < bounces): # R->1
+            if (done): # R->1
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] -= 5
+            elif (self.pbounce < bounces): # R->-1
+                # reward = -2 * abs(ball_y - paddle)
                 reward = bounces
-
-            elif (done): # R->-1
-                reward = -10
-
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
             else: # R=>0
                 reward = 0
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
 
-            self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
+
+            # self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
 
             #Save previous state
             self.prev_state = [ball_x, ball_y, v_x, v_y, paddle]
