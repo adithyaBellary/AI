@@ -19,6 +19,7 @@ class Agent:
         self.prev_state = [0, 0, 0, 0, 0]
         self.N = utils.create_q_table()
         self.pbounce = 0
+        self.first = True
 
 
     def act(self, state, bounces, done, won):
@@ -32,8 +33,6 @@ class Agent:
             # [self.ball_x, self.ball_y, self.velocity_x, self.velocity_y,self.paddle_y,self.opponent_y,]
             
             #Discretize the continuous state space
-            
-
 
             #TODO
             r = np.random.randint(0, 20)
@@ -42,48 +41,46 @@ class Agent:
             epsilon = 10
             gamma = .9
 
-            if(r <= epsilon):
-                action = np.random.randint(-1,1)
-                # if self.N[ball_x][ball_y][v_x][v_y][paddle][0] == 0:
-                #     action = self._actions[0]
-                # elif self.N[ball_x][ball_y][v_x][v_y][paddle][1] == 0:
-                #     action = self._actions[1]
-                # elif self.N[ball_x][ball_y][v_x][v_y][paddle][2] == 0:
-                #     action = self._actions[2]
+            if(r <= epsilon or self.first == True):
+                
+                if self.N[ball_x][ball_y][v_x][v_y][paddle][0] == 0:
+                    action = 0
+                elif self.N[ball_x][ball_y][v_x][v_y][paddle][1] == 0:
+                    action = 1
+                elif self.N[ball_x][ball_y][v_x][v_y][paddle][2] == 0:
+                    action = 2
+                else:
+                    action = np.random.randint(0,2)
 
             else:
-                action = self._actions[np.argmax(self.Q[ball_x][ball_y][v_x][v_y][paddle])]
-
-            #print("action: ", action)
+                action = np.argmax(self.Q[ball_x][ball_y][v_x][v_y][paddle])
 
             alpha = C / (C + self.N[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action])
+
             #Observe reward R(s) and next state s'
             if (self.pbounce < bounces): # R->1
-                reward = 1;
+                reward = 1
 
-            elif (done == True): # R->-1
-                reward = -1;
+            elif (done): # R->-1
+                reward = -1
 
             else: # R=>0
-                reward = 0;
+                reward = 0
 
             self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
 
-            #Update Q values for previous state s
-            # self.Q[ball_x][ball_y][v_x][v_y][paddle][prev_action] = self.Q[] + learning_rate*(reward() - self.Q[] + gamma*)
-            
-            #print(self.N[ball_x][ball_y][v_x][v_y][paddle][action])
             #Save previous state
             self.prev_state = [ball_x, ball_y, v_x, v_y, paddle]
             self.prev_action = action
             self.N[ball_x][ball_y][v_x][v_y][paddle][action]+=1
-
-            #print(self.N[ball_x][ball_y][v_x][v_y][paddle][action])
+            self.pbounce = bounces
+            self.first = False
 
         else:
-            action = self._actions[np.argmax(self.Q[ball_x][ball_y][v_x][v_y][paddle])]
+            action = np.argmax(self.Q[ball_x][ball_y][v_x][v_y][paddle])
 
-        return action
+        #print(action)
+        return self._actions[action]
 
     def discretize(self, state):
         discrete_ball_x = np.floor(state[0]*12) - 1
