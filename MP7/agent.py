@@ -21,6 +21,8 @@ class Agent:
         self.pbounce = 0
         self.first = True
         self.itrs = 0
+        self.explore = True
+        self.explore_print = True
 
     def act(self, state, bounces, done, won):
          #TODO - fill out this function
@@ -39,13 +41,17 @@ class Agent:
             r = np.random.randint(0, 100)
 
             #From current state s, choose action a based on exploration vs. exploitation policy (implement epsilon-greedy approach)
-            if(self.itrs < 100000): 
-                epsilon = 75
-            elif(self.itrs < 150000):
-                epsilon = 15
+            if(self.itrs < 250000): 
+                epsilon = 85
+            elif(self.itrs < 350000): 
+                self.explore = False
+                if self.explore_print == True:
+                    print('we done exploring')
+                    self.explore_print = False
+                epsilon = 35
             else:
-                epsilon = 1	
-            gamma = .95
+                epsilon = 5
+            gamma = .87
 
             if(r <= epsilon or self.first == True):
                 
@@ -65,10 +71,27 @@ class Agent:
 
             #Observe reward R(s) and next state s'
             if (done): # R->1
-                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] -= 5
+                # if self.explore == True:
+                #     reward = 10
+                # else:
+                #     reward = 5
+                # if ball_y < paddle:
+                #     reward = 10 * abs(ball_y - paddle)
+                # else:
+                #     reward = 10 * abs(ball_y - (paddle + 0.2))
+                reward = 10
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] -= reward
             elif (self.pbounce < bounces): # R->-1
                 # reward = -2 * abs(ball_y - paddle)
-                reward = bounces
+                # if self.explore == True:
+                #     reward = bounces * 2
+                # else:
+                #     reward = bounces
+                reward = 2
+                # if abs((paddle + 0.1) - ball_y) < 0.05:
+                #     reward = 2 * bounces
+                # else:
+                #     reward = 1 * bounces
                 self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
             else: # R=>0
                 reward = 0
@@ -114,7 +137,7 @@ class Agent:
         if(state[4] >= 0.8):
             discrete_paddle = 11
         else:
-            discrete_paddle = np.floor((12*state[4])/1-0.2)
+            discrete_paddle = np.floor((12*state[4])/0.8)
 
         return int(discrete_ball_x), int(discrete_ball_y), int(discrete_v_x), int(discrete_v_y), int(discrete_paddle)
 
