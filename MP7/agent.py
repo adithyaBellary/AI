@@ -23,11 +23,15 @@ class Agent:
         self.itrs = 0
         self.explore = True
         self.explore_print = True
+        self.epsilon = 100
+        self.decay = 0.9999
+        self.min_epsilon = 0.1
 
     def act(self, state, bounces, done, won):
          #TODO - fill out this function
-        C = 45
+        C = 50
         self.itrs += 1
+
         #Discretize the continuous state space
         if(self.prev_state[0] == 0 and self.prev_state[1] == 0 and self.prev_state[2] == 0 and self.prev_state[3] == 0 and self.prev_state[4] == 0):
             x, y, vx, vy, pad = self.discretize(self.prev_state)
@@ -41,19 +45,10 @@ class Agent:
             r = np.random.randint(0, 100)
 
             #From current state s, choose action a based on exploration vs. exploitation policy (implement epsilon-greedy approach)
-            if(self.itrs < 250000): 
-                epsilon = 85
-            elif(self.itrs < 350000): 
-                self.explore = False
-                if self.explore_print == True:
-                    print('we done exploring')
-                    self.explore_print = False
-                epsilon = 35
-            else:
-                epsilon = 5
+            self.epsilon = max(self.min_epsilon, self.epsilon * self.decay)
             gamma = .87
 
-            if(r <= epsilon or self.first == True):
+            if(r <= self.epsilon or self.first == True):
                 
                 if self.N[ball_x][ball_y][v_x][v_y][paddle][0] == 0:
                     action = 0
@@ -71,34 +66,14 @@ class Agent:
 
             #Observe reward R(s) and next state s'
             if (done): # R->1
-                # if self.explore == True:
-                #     reward = 10
-                # else:
-                #     reward = 5
-                # if ball_y < paddle:
-                #     reward = 10 * abs(ball_y - paddle)
-                # else:
-                #     reward = 10 * abs(ball_y - (paddle + 0.2))
                 reward = 10
                 self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] -= reward
             elif (self.pbounce < bounces): # R->-1
-                # reward = -2 * abs(ball_y - paddle)
-                # if self.explore == True:
-                #     reward = bounces * 2
-                # else:
-                #     reward = bounces
-                reward = 2
-                # if abs((paddle + 0.1) - ball_y) < 0.05:
-                #     reward = 2 * bounces
-                # else:
-                #     reward = 1 * bounces
+                reward = bounces
                 self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
             else: # R=>0
                 reward = 0
                 self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
-
-
-            # self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
 
             #Save previous state
             self.prev_state = [ball_x, ball_y, v_x, v_y, paddle]
