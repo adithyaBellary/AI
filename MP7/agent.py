@@ -16,7 +16,7 @@ class Agent:
         self.Q = utils.create_q_table()
         self.two_sided = two_sided
         self.prev_action = 0
-        self.prev_state = [0, 0, 0, 0, 0]
+        self.prev_state = [0, 0.5, 0, 0, 0.8]
         self.N = utils.create_q_table()
         self.pbounce = 0
         self.first = True
@@ -26,14 +26,15 @@ class Agent:
         self.epsilon = 100
         self.decay = 0.9999
         self.min_epsilon = 0.1
+        self.c_val = 50
+        self.min_c = 30
 
     def act(self, state, bounces, done, won):
          #TODO - fill out this function
-        C = 50
         self.itrs += 1
 
         #Discretize the continuous state space
-        if(self.prev_state[0] == 0 and self.prev_state[1] == 0 and self.prev_state[2] == 0 and self.prev_state[3] == 0 and self.prev_state[4] == 0):
+        if(self.prev_state[0] == 0 and self.prev_state[1] == 0.5 and self.prev_state[2] == 0 and self.prev_state[3] == 0 and self.prev_state[4] == 0.8):
             x, y, vx, vy, pad = self.discretize(self.prev_state)
             self.prev_state = [x, y, vx, vy, pad]
 
@@ -62,7 +63,9 @@ class Agent:
             else:
                 action = np.argmax(self.Q[ball_x][ball_y][v_x][v_y][paddle])
 
-            alpha = C / (C + self.N[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action])
+            self.c_val = max(self.min_c, self.c_val*self.decay)
+
+            alpha = self.c_val / (self.c_val + self.N[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action])
 
             #Observe reward R(s) and next state s'
             if (done): # R->1
