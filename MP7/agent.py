@@ -23,9 +23,10 @@ class Agent:
         self.itrs = 0
         self.explore = True
         self.explore_print = True
-        self.epsilon = 100
-        self.decay = 0.9999
-        self.min_epsilon = 0.1
+        self.epsilon = 1
+        self.decay = 0.999
+        self.min_epsilon = .001
+        self.cdecay = .9
         self.c_val = 50
         self.min_c = 30
 
@@ -43,13 +44,19 @@ class Agent:
         if(self._train == True):
 
             #TODO
-            r = np.random.randint(0, 100)
+            r = np.random.uniform(0, 1)
 
             #From current state s, choose action a based on exploration vs. exploitation policy (implement epsilon-greedy approach)
-            self.epsilon = max(self.min_epsilon, self.epsilon * self.decay)
+            #self.epsilon = max(self.min_epsilon, self.epsilon * self.decay)
             gamma = .87
+            if (self.itrs < 20000):
+                self.epsilon = .9
+            elif (self.itrs < 200000):
+                self.epsilon = .35
+            else:
+                self.epsilon = .15#max(self.min_epsilon, self.epsilon * self.decay)
 
-            if(r <= self.epsilon or self.first == True):
+            if(r <= self.epsilon):# or self.first == True):
                 
                 if self.N[ball_x][ball_y][v_x][v_y][paddle][0] == 0:
                     action = 0
@@ -58,28 +65,36 @@ class Agent:
                 elif self.N[ball_x][ball_y][v_x][v_y][paddle][2] == 0:
                     action = 2
                 else:
-                    action = np.random.randint(0,2)
+                    #if (self.N[ball_x][ball_y][v_x][v_y][paddle][0] < self.N[ball_x][ball_y][v_x][v_y][paddle][2]):
+                    #    action = 0
+                    #else:
+                    #    action = 2
+                    action = np.argmin(self.N[ball_x][ball_y][v_x][v_y][paddle])
 
             else:
                 action = np.argmax(self.Q[ball_x][ball_y][v_x][v_y][paddle])
 
-            self.c_val = max(self.min_c, self.c_val*self.decay)
+            self.c_val = max(self.min_c, self.c_val*self.cdecay)
 
             alpha = self.c_val / (self.c_val + self.N[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action])
 
             #Observe reward R(s) and next state s'
             if (done): # R->1
-                reward = 10
-                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] -= reward
+                reward = 15
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] -= alpha*reward
             elif(won):
-                reward = 5
-                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] += reward
+                if (bounces <= 7):
+                    reward = 20
+                else:
+                    reward = 9
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] += alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action]) #reward
+
             elif (self.pbounce < bounces): # R->-1
                 reward = bounces
-                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] += alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
             else: # R=>0
-                reward = 0
-                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] = self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
+                reward = -1
+                self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] += alpha*(reward - self.Q[self.prev_state[0]][self.prev_state[1]][self.prev_state[2]][self.prev_state[3]][self.prev_state[4]][self.prev_action] + gamma*self.Q[ball_x][ball_y][v_x][v_y][paddle][action])
 
             #Save previous state
             self.prev_state = [ball_x, ball_y, v_x, v_y, paddle]
